@@ -180,60 +180,37 @@
         const TOKEN = GITHUB_TOKEN.trim();
         const REQUEST_HEADERS = {
             'Authorization': 'token ' + TOKEN,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json;charset=utf-8',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
+            'Accept': 'application/vnd.github.v3+json'
         };
 
         async function getNextPageNum(userFolder) {
-            const encodeFolder = encodeURIComponent(userFolder);
-            const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeFolder}`;
-            let response;
-            let retry = 2;
-            while (retry > 0) {
-                try {
-                    response = await fetch(apiUrl, {
-                        method: 'GET',
-                        headers: REQUEST_HEADERS,
-                        mode: 'cors',
-                        credentials: 'omit',
-                        redirect: 'follow'
-                    });
-                    break;
-                } catch (err) {
-                    retry--;
-                    if (retry === 0) throw new Error('网络请求失败，请检查网络是否能访问GitHub');
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
+            const apiUrl = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + encodeURIComponent(userFolder);
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: REQUEST_HEADERS,
+                    mode: 'cors'
+                });
+                if (response.status === 404) return 1;
+                if (response.status === 401) throw new Error('401：Token无效/非HYQY2012账号生成');
+                if (response.status === 403) throw new Error('403：Token未勾选repo全权限');
+                if (!response.ok) throw new Error('请求失败，状态码：' + response.status);
+                const files = await response.json();
+                const pageNums = files.filter(item => item.type === 'dir' && /^page_\d+$/.test(item.name)).map(item => parseInt(item.name.split('_')[1])).filter(num => !isNaN(num) && num > 0);
+                return pageNums.length > 0 ? Math.max(...pageNums) + 1 : 1;
+            } catch (err) {
+                if (err.message.includes('net::ERR_FAILED')) throw new Error('网络错误：无法连接GitHub，请检查网络/关闭代理插件');
+                throw err;
             }
-            if (response.status === 404) return 1;
-            if (response.status === 401) throw new Error('401：Token无效/非HYQY2012账号生成/权限未开');
-            if (response.status === 403) throw new Error('403：Token未勾选repo全权限，请重新生成');
-            if (response.status >= 500) throw new Error('GitHub服务器错误，请稍后再试');
-            if (!response.ok) throw new Error(`获取目录失败，状态码：${response.status}`);
-            const files = await response.json();
-            const pageNums = files
-                .filter(item => item.type === 'dir' && /^page_\d+$/.test(item.name))
-                .map(item => parseInt(item.name.split('_')[1]))
-                .filter(num => !isNaN(num) && num > 0);
-            return pageNums.length > 0 ? Math.max(...pageNums) + 1 : 1;
         }
 
         function toBase64(str) {
-            try {
-                return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-                    return String.fromCharCode('0x' + p1);
-                }));
-            } catch (e) {
-                throw new Error('内容编码失败，请检查是否有特殊字符');
-            }
+            return btoa(unescape(encodeURIComponent(str)));
         }
 
         uploadBtn.addEventListener('click', async () => {
             const userFolder = userFolderInput.value.trim().replace(/[\/\\:*?"<>|]/g, '');
-            const mdContent = mdContentInput.value.trim() || `# ${userFolder} - page_* \n\n这是HHAT自动生成的Markdown文件`;
+            const mdContent = mdContentInput.value.trim() || '# ' + userFolder + ' - page_* \n\n这是HHAT自动生成的Markdown文件';
             if (!userFolder) {
                 result.className = 'result error';
                 result.innerText = '请输入用户文件夹名称（英文/数字/下划线）';
@@ -246,7 +223,7 @@
             }
             if (!TOKEN || TOKEN.length < 40 || !TOKEN.startsWith('ghp_')) {
                 result.className = 'result error';
-                result.innerText = '请配置有效的PAT（ghp_开头40位，HYQY2012账号生成）';
+                result.innerText = '请配置有效的PAT（ghp_开头40位）';
                 return;
             }
             uploadBtn.disabled = true;
@@ -257,39 +234,31 @@
             try {
                 progressBar.style.width = '30%';
                 const nextPageNum = await getNextPageNum(userFolder);
-                const pageFolder = `page_${nextPageNum}`;
-                const filePath = `${userFolder}/${pageFolder}/index.md`;
-                progressBar.style.width = '40%';
+                const pageFolder = 'page_' + nextPageNum;
+                const filePath = userFolder + '/' + pageFolder + '/index.md';
                 progressBar.style.width = '50%';
                 const base64Content = toBase64(mdContent);
-                progressBar.style.width = '60%';
-                const uploadUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(filePath)}`;
+                progressBar.style.width = '70%';
+                const uploadUrl = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + encodeURIComponent(filePath);
                 const uploadResponse = await fetch(uploadUrl, {
                     method: 'PUT',
                     headers: REQUEST_HEADERS,
                     mode: 'cors',
-                    credentials: 'omit',
                     body: JSON.stringify({
-                        message: `HHAT上传：${filePath}`,
+                        message: 'HHAT上传：' + filePath,
                         content: base64Content,
-                        branch: GITHUB_BRANCH,
-                        committer: {
-                            name: GITHUB_OWNER,
-                            email: GITHUB_OWNER + '@github.com'
-                        }
+                        branch: GITHUB_BRANCH
                     })
                 });
-                progressBar.style.width = '90%';
                 const data = await uploadResponse.json();
                 if (uploadResponse.ok) {
                     progressBar.style.width = '100%';
                     result.className = 'result success';
-                    result.innerText = `上传成功！\n文件路径：${filePath}\n访问链接：${data.content.html_url}`;
+                    result.innerText = '上传成功！\n文件路径：' + filePath + '\n访问链接：' + data.content.html_url;
                     userFolderInput.value = '';
                     mdContentInput.value = '';
                 } else {
-                    const errMsg = data.message || `上传失败：${uploadResponse.statusText}`;
-                    throw new Error(errMsg.includes('403') ? '403：Token无写入权限，勾选repo全权限' : errMsg);
+                    throw new Error(data.message || '上传失败：' + uploadResponse.statusText);
                 }
             } catch (err) {
                 result.className = 'result error';
