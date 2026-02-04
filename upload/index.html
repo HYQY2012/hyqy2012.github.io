@@ -199,7 +199,7 @@
                 const pageNums = files.filter(item => item.type === 'dir' && /^page_\d+$/.test(item.name)).map(item => parseInt(item.name.split('_')[1])).filter(num => !isNaN(num) && num > 0);
                 return pageNums.length > 0 ? Math.max(...pageNums) + 1 : 1;
             } catch (err) {
-                if (err.message.includes('net::ERR_FAILED')) throw new Error('网络错误：无法连接GitHub，请检查网络/关闭代理插件');
+                if (err.message.includes('net::ERR_FAILED') || err.message.includes('CORS')) throw new Error('跨域/网络错误：请检查网络或切换网络环境');
                 throw err;
             }
         }
