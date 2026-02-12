@@ -1,0 +1,49 @@
+# ======================================
+# 站点基础信息
+# ======================================
+# 站点标题
+title: 我的内容投稿站
+# 站点副标题
+subtitle: YouTube风格的Markdown内容发布平台
+# 站点描述（SEO用）
+description: 支持用户投稿Markdown内容，自动生成MD文件的静态站点
+# 站点URL（GitHub Pages必填，格式：https://用户名.github.io/仓库名/）
+url: https://hyqy2012.github.io/hyqy2012.github.io
+# 仓库相对路径（仓库名，非根域名部署时必填）
+baseurl: "/hyqy2012.github.io
+# ======================================
+# 构建配置
+# ======================================
+# 站点语言
+lang: zh-CN
+# 时区
+timezone: Asia/Shanghai
+# 编码
+encoding: utf-8
+# Markdown渲染引擎（GitHub Pages推荐kramdown）
+markdown: kramdown
+# 代码高亮
+highlighter: rouge
+
+# ======================================
+# 内容相关配置
+# ======================================
+# 文章存放目录（对应你要生成的articles文件夹）
+collections:
+  articles:
+    output: true       # 开启该目录的页面生成
+    permalink: /articles/:name/  # 文章访问路径规则
+# 分页配置（如需）
+paginate: 10
+paginate_path: "/page/:num/"
+
+# ======================================
+# 自定义变量（可在模板中调用）
+# ======================================
+# 作者信息
+author:
+  name: 站点管理员
+  email: xh20121017@outlook.com
+# 自定义路径（指向你的投稿相关文件）
+paths:
+  articles: "/articles/"  # MD文件存放目录
