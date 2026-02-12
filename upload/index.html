@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -12,13 +13,11 @@
             box-sizing: border-box;
             font-family: 'Helvetica Neue', Arial, sans-serif;
         }
-        
         body {
             background-color: #f9f9f9;
             color: #333;
             line-height: 1.6;
         }
-        
         header {
             background-color: #fff;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
@@ -29,7 +28,6 @@
             -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             -moz-box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        
         .navbar {
             display: -webkit-flex;
             display: flex;
@@ -40,7 +38,6 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-        
         .logo {
             display: -webkit-flex;
             display: flex;
@@ -51,13 +48,11 @@
             font-size: 24px;
             font-weight: bold;
         }
-        
         .container {
             max-width: 800px;
             margin: 40px auto;
             padding: 0 20px;
         }
-        
         .upload-card {
             background-color: #fff;
             border-radius: 8px;
@@ -68,7 +63,6 @@
             -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             -moz-box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
         .upload-card h2 {
             color: #202124;
             font-size: 24px;
@@ -76,19 +70,16 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
         }
-        
         .form-group {
             margin-bottom: 20px;
         }
-        
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
             color: #202124;
         }
-        
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid #ddd;
@@ -97,20 +88,11 @@
             -webkit-border-radius: 4px;
             -moz-border-radius: 4px;
         }
-        
         .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
             min-height: 300px;
             resize: vertical;
             font-family: 'Courier New', monospace;
-            -webkit-border-radius: 4px;
-            -moz-border-radius: 4px;
         }
-        
         .btn {
             background-color: #ff0000;
             color: #fff;
@@ -126,11 +108,9 @@
             -webkit-transition: background-color 0.2s;
             -moz-transition: background-color 0.2s;
         }
-        
         .btn:hover {
             background-color: #cc0000;
         }
-        
         .alert {
             padding: 15px;
             border-radius: 4px;
@@ -140,31 +120,26 @@
             -moz-border-radius: 4px;
             display: none;
         }
-        
         .alert-error {
             background-color: #ffebee;
             color: #b71c1c;
             display: block;
         }
-        
         .alert-success {
             background-color: #e8f5e9;
             color: #2e7d32;
             display: block;
         }
-        
         .hint {
             font-size: 14px;
             color: #666;
             margin-top: 5px;
             font-style: italic;
         }
-
         @media screen and (max-width: 768px) {
             .upload-card {
                 padding: 20px;
             }
-            
             .form-group textarea {
                 min-height: 200px;
             }
@@ -178,59 +153,116 @@
                 <span>▶</span>
                 <span>内容投稿</span>
             </div>
-            <div>YouTube风格投稿工具</div>
+            <div>GitHub令牌上传版</div>
         </div>
     </header>
     
     <div class="container">
         <div class="upload-card">
             <h2>内容投稿</h2>
-            
             <div id="message" class="alert"></div>
             
-            <form id="submitForm" method="POST" action="submit.php">
+            <form id="submitForm">
                 <div class="form-group">
                     <label for="username">用户名</label>
                     <input type="text" id="username" name="username" placeholder="请输入您的用户名" required>
                 </div>
-                
                 <div class="form-group">
                     <label for="content">内容 (支持Markdown)</label>
                     <textarea id="content" name="content" placeholder="请输入Markdown格式的内容..."></textarea>
                     <div class="hint">支持Markdown语法：# 标题、**粗体**、*斜体*、[链接](url) 等</div>
                 </div>
-                
                 <button type="submit" class="btn">提交投稿</button>
             </form>
         </div>
     </div>
 
     <script>
-        document.getElementById('submitForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const message = document.getElementById('message');
-            
-            fetch('submit.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                message.className = 'alert';
-                if (data.error) {
-                    message.classList.add('alert-error');
-                    message.textContent = data.error;
-                } else {
-                    message.classList.add('alert-success');
-                    message.textContent = data.success;
-                    document.getElementById('submitForm').reset();
-                }
-            })
-            .catch(error => {
-                message.className = 'alert alert-error';
-                message.textContent = '提交失败，请重试';
+        const CONFIG = {
+            GITHUB_TOKEN: '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',
+            OWNER: 'HYQY2012',
+            REPO: 'article',
+            BRANCH: 'main'
+        };
+
+        async function getNextFileId() {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${CONFIG.OWNER}/${CONFIG.REPO}/contents/articles`, {
+                    headers: {
+                        'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (!response.ok) throw new Error('获取文件列表失败');
+                
+                const files = await response.json();
+                let maxId = 0;
+                files.forEach(file => {
+                    const match = file.name.match(/id_(\d+)\.md/);
+                    if (match) maxId = Math.max(maxId, parseInt(match[1]));
+                });
+                return maxId + 1;
+            } catch (error) {
+                return 1;
+            }
+        }
+
+        async function uploadToGitHub(filename, content) {
+            const encodedContent = btoa(unescape(encodeURIComponent(content)));
+            const response = await fetch(`https://api.github.com/repos/${CONFIG.OWNER}/${CONFIG.REPO}/contents/articles/${filename}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Add new article: ${filename}`,
+                    content: encodedContent,
+                    branch: CONFIG.BRANCH
+                })
             });
+            if (!response.ok) throw new Error('文件上传失败');
+            return await response.json();
+        }
+
+        document.getElementById('submitForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const message = document.getElementById('message');
+            const username = document.getElementById('username').value.trim();
+            const content = document.getElementById('content').value.trim();
+            
+            if (!username) {
+                message.className = 'alert alert-error';
+                message.textContent = '请输入用户名';
+                return;
+            }
+            if (!content) {
+                message.className = 'alert alert-error';
+                message.textContent = '请输入内容';
+                return;
+            }
+
+            try {
+                const nextId = await getNextFileId();
+                const filename = `id_${nextId.toString().padStart(5, '0')}.md`;
+                
+                const mdContent = `---
+username: ${username}
+created_at: ${new Date().toISOString().slice(0, 19).replace('T', ' ')}
+---
+
+${content}`;
+
+                await uploadToGitHub(filename, mdContent);
+                
+                message.className = 'alert alert-success';
+                message.textContent = `内容上传成功！文件已保存为：articles/${filename}`;
+                this.reset();
+            } catch (error) {
+                message.className = 'alert alert-error';
+                message.textContent = `上传失败：${error.message}`;
+            }
         });
     </script>
 </body>
