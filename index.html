@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="robots" content="index, follow">
-    <meta name="description" content="HYQY Chat - 内容分享平台">
+    <meta name="description" content="HYQY Article Platform">
     <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
     <link rel="shortcut icon" href="/img/logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/img/logo.svg">
-    <title>HYQY Chat</title>
+    <title>HYQY 文章管理</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
         
         :root {
@@ -31,13 +31,13 @@
             --gray-700: #374151;
             --gray-800: #1F2937;
             --gray-900: #111827;
+            --green-500: #22C55E;
         }
         
         body {
             background-color: var(--light);
             color: var(--primary);
             min-height: 100vh;
-            font-display: swap;
             scroll-behavior: smooth;
         }
         
@@ -59,11 +59,11 @@
             border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #000000;
+            background: var(--gray-400);
             border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #333333;
+            background: var(--gray-600);
         }
         
         .container {
@@ -122,24 +122,8 @@
             padding-right: 24px;
         }
         
-        .mb-4 {
-            margin-bottom: 16px;
-        }
-        
-        .mb-6 {
-            margin-bottom: 24px;
-        }
-        
         .mb-8 {
             margin-bottom: 32px;
-        }
-        
-        .mr-2 {
-            margin-right: 8px;
-        }
-        
-        .mr-3 {
-            margin-right: 12px;
         }
         
         .text-xl {
@@ -182,10 +166,6 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
-        .shadow-xl {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        
         .overflow-hidden {
             overflow: hidden;
         }
@@ -199,7 +179,7 @@
         }
         
         .bg-white {
-            background-color: white;
+            background-color: var(--light);
         }
         
         .bg-gray-100 {
@@ -210,10 +190,6 @@
             text-align: center;
         }
         
-        .text-gray-400 {
-            color: var(--gray-400);
-        }
-        
         .text-gray-500 {
             color: var(--gray-500);
         }
@@ -222,16 +198,8 @@
             color: var(--gray-600);
         }
         
-        .text-gray-700 {
-            color: var(--gray-700);
-        }
-        
         .text-gray-800 {
             color: var(--gray-800);
-        }
-        
-        .text-gray-900 {
-            color: var(--gray-900);
         }
         
         .text-primary {
@@ -239,19 +207,11 @@
         }
         
         .text-white {
-            color: white;
-        }
-        
-        .text-orange-500 {
-            color: #F97316;
-        }
-        
-        .text-red-500 {
-            color: #EF4444;
+            color: var(--light);
         }
         
         .text-green-500 {
-            color: #22C55E;
+            color: var(--green-500);
         }
         
         .hover\:bg-gray-100:hover {
@@ -266,10 +226,6 @@
             background-color: var(--gray-800);
         }
         
-        .hover\:text-primary:hover {
-            color: var(--primary);
-        }
-        
         .hover\:text-gray-800:hover {
             color: var(--gray-800);
         }
@@ -282,16 +238,6 @@
             transition-property: color, background-color, border-color;
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 150ms;
-        }
-        
-        .transition-all {
-            transition-property: all;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 150ms;
-        }
-        
-        .duration-300 {
-            transition-duration: 300ms;
         }
         
         .outline-none {
@@ -351,10 +297,6 @@
             position: sticky;
         }
         
-        .top-0 {
-            top: 0px;
-        }
-        
         .backdrop-blur-xs {
             backdrop-filter: blur(2px);
         }
@@ -364,9 +306,9 @@
         }
         
         .card-hover:hover {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: translateY(-4px);
-            border-color: rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+            border-color: var(--gray-300);
         }
         
         .text-balance {
@@ -395,32 +337,13 @@
             padding-right: 10px;
         }
         
-        .py-1 {
-            padding-top: 4px;
-            padding-bottom: 4px;
-        }
-        
-        .py-2 {
-            padding-top: 8px;
-            padding-bottom: 8px;
-        }
-        
         .py-24 {
             padding-top: 96px;
             padding-bottom: 96px;
         }
         
-        .max-w-2xl {
-            max-width: 48rem;
-        }
-        
         .max-w-md {
             max-width: 28rem;
-        }
-        
-        .mx-8 {
-            margin-left: 32px;
-            margin-right: 32px;
         }
         
         .mx-auto {
@@ -440,28 +363,6 @@
             display: inline-flex;
         }
         
-        .animate-pulse-slow {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-        
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-        
         .spin {
             animation: spin 2s linear infinite;
         }
@@ -469,36 +370,6 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-        
-        @media (min-width: 640px) {
-            .sm\:grid-cols-2 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-            .sm\:inline {
-                display: inline;
-            }
-        }
-        
-        @media (min-width: 768px) {
-            .md\:grid-cols-3 {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-            .md\:text-2xl {
-                font-size: 24px;
-            }
-            .md\:flex {
-                display: flex;
-            }
-            .md\:hidden {
-                display: none;
-            }
-        }
-        
-        @media (min-width: 1024px) {
-            .lg\:grid-cols-4 {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
         }
         
         .grid {
@@ -516,14 +387,43 @@
         .hidden {
             display: none;
         }
+        
+        @media (min-width: 640px) {
+            .sm\:grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .sm\:inline {
+                display: inline;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .md\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .md\:flex {
+                display: flex;
+            }
+            .md\:hidden {
+                display: none;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .lg\:grid-cols-4 {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen bg-light text-primary">
     <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-xs border border-gray-200">
         <div class="container mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <img src="/img/logo.svg" alt="Logo" class="w-9 h-9" width="36" height="36">
-                <h1 class="text-xl md:text-2xl font-bold text-primary">HYQY Chat</h1>
+                <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-primary">
+                    <span>📝</span>
+                </div>
+                <h1 class="text-xl md:text-2xl font-bold text-primary">HYQY 文章平台</h1>
             </div>
             
             <div class="hidden md:flex items-center flex-1 max-w-2xl mx-8">
@@ -531,7 +431,7 @@
                     <input 
                         type="text" 
                         id="searchInput"
-                        placeholder="搜索文章内容/作者..." 
+                        placeholder="搜索文章内容/编号..." 
                         class="w-full py-2.5 px-4 pr-12 rounded-full border border-gray-200 outline-none bg-white shadow-md"
                     >
                     <button id="searchBtn" class="absolute right-0 top-0 h-full px-4 rounded-r-full hover:bg-gray-100 transition-colors flex items-center justify-center">
@@ -544,10 +444,9 @@
                 <button class="md:hidden text-gray-800 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100">
                     <span class="text-lg">🔍</span>
                 </button>
-                
-                <a href="upload/" class="flex items-center gap-2 py-2 px-4 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200">
-                    <span class="text-lg text-primary">📤</span>
-                    <span class="hidden sm:inline text-sm font-medium text-primary">上传内容</span>
+                <a href="https://github.com/HYQY2012/article/tree/main/articles" target="_blank" class="flex items-center gap-2 py-2 px-4 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200">
+                    <span class="text-lg text-primary">🐙</span>
+                    <span class="hidden sm:inline text-sm font-medium text-primary">GitHub</span>
                 </a>
             </div>
         </div>
@@ -555,11 +454,11 @@
 
     <main class="container mx-auto px-4 py-8">
         <div id="status" class="mb-8 py-4 px-6 rounded-xl bg-gray-100 text-center border border-gray-200">
-            <span class="spin mr-2 text-primary animate-pulse-slow">🔄</span>
+            <span class="spin mr-2 text-primary">🔄</span>
             正在加载文章内容...
         </div>
 
-        <div id="articlesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fade-in">
+        <div id="articlesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         </div>
 
         <div id="emptyState" class="hidden py-24 text-center">
@@ -568,8 +467,8 @@
             </div>
             <h3 class="text-2xl text-gray-800 mb-3 font-medium">无记录</h3>
             <p class="text-gray-600 mb-6 max-w-md mx-auto">暂无相关文章</p>
-            <a href="upload/" class="inline-flex items-center gap-2 py-2 px-6 rounded-full bg-primary text-white hover:bg-gray-800 transition-colors">
-                <span class="mr-1">➕</span> 上传第一篇文章
+            <a href="https://github.com/HYQY2012/article/tree/main/articles" target="_blank" class="inline-flex items-center gap-2 py-2 px-6 rounded-full bg-primary text-white hover:bg-gray-800 transition-colors">
+                <span class="mr-1">🐙</span> 前往GitHub查看
             </a>
         </div>
     </main>
@@ -578,9 +477,9 @@
         const CONFIG = {
             OWNER: 'HYQY2012',
             REPO: 'article',
-            BRANCH: 'main',
-            API_URL: `https://gh.api.99988866.xyz/https://api.github.com/repos/HYQY2012/article/contents/articles`,
-            TIMEOUT: 30000
+            PATH: 'articles',
+            API_URL: 'https://gh.api.99988866.xyz/https://api.github.com/repos/HYQY2012/article/contents/articles',
+            TIMEOUT: 50000
         };
 
         let allArticles = [];
@@ -604,7 +503,7 @@
                     headers: {
                         'Accept': 'application/vnd.github.v3+json',
                         'Cache-Control': 'public, max-age=300',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
                     },
                     signal: controller.signal,
                     method: 'GET',
@@ -615,12 +514,15 @@
                 clearTimeout(timeoutId);
                 
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
                     throw new Error(`请求失败 [${response.status}]`);
                 }
                 
-                const files = await response.json();
-                const mdFiles = files.filter(file => file.name.endsWith('.md') && file.name.startsWith('id_'));
+                const data = await response.json();
+                const mdFiles = Array.isArray(data) ? data.filter(file => {
+                    return typeof file.name === 'string' 
+                        && file.name.endsWith('.md') 
+                        && /^id_\d+\.md$/.test(file.name);
+                }) : [];
                 
                 if (mdFiles.length === 0) {
                     statusEl.style.display = 'none';
@@ -629,58 +531,45 @@
                     return;
                 }
 
-                const chunkSize = 8;
-                const chunks = [];
-                for (let i = 0; i < mdFiles.length; i += chunkSize) {
-                    chunks.push(mdFiles.slice(i, i + chunkSize));
-                }
-
                 allArticles = [];
-                for (const chunk of chunks) {
-                    const articlesChunk = await Promise.allSettled(
-                        chunk.map(async (file) => {
-                            const proxyFileUrl = `https://gh.api.99988866.xyz/${file.url}`;
-                            const contentResponse = await fetch(proxyFileUrl, {
-                                headers: {
-                                    'Cache-Control': 'public, max-age=300',
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                                },
-                                mode: 'cors',
-                                credentials: 'omit'
-                            });
-                            
-                            if (!contentResponse.ok) throw new Error(`获取文件内容失败: ${file.name}`);
-                            
-                            const contentData = await contentResponse.json();
-                            let decodedContent = '';
-                            try {
-                                decodedContent = decodeURIComponent(escape(atob(contentData.content)));
-                            } catch (e) {
-                                decodedContent = atob(contentData.content);
-                            }
-                            
-                            const { username, created_at, content } = parseMdContent(decodedContent);
-                            
-                            return {
-                                id: file.name.replace('.md', ''),
-                                filename: file.name,
-                                username: username || '未知作者',
-                                createdAt: created_at || '未知时间',
-                                content: content || '',
-                                rawUrl: `https://gh.api.99988866.xyz/${file.download_url}`,
-                                githubUrl: file.html_url
-                            };
-                        })
-                    );
-                    
-                    const successfulArticles = articlesChunk
-                        .filter(result => result.status === 'fulfilled')
-                        .map(result => result.value);
-                    
-                    allArticles.push(...successfulArticles);
-                    renderArticles(allArticles);
+                for (const file of mdFiles) {
+                    try {
+                        const contentResponse = await fetch(file.download_url, {
+                            headers: {
+                                'Cache-Control': 'public, max-age=300',
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            },
+                            mode: 'cors',
+                            credentials: 'omit'
+                        });
+                        
+                        if (!contentResponse.ok) continue;
+                        
+                        const contentData = await contentResponse.text();
+                        const { title, author, createTime, content } = parseMdContent(contentData);
+                        
+                        allArticles.push({
+                            id: file.name.replace('.md', ''),
+                            filename: file.name,
+                            title: title || file.name,
+                            author: author || 'HYQY2012',
+                            createTime: createTime || formatDate(new Date()),
+                            content: content || '暂无文章内容',
+                            rawUrl: file.download_url,
+                            githubUrl: file.html_url
+                        });
+                    } catch (e) {
+                        continue;
+                    }
                 }
 
+                allArticles.sort((a, b) => {
+                    const idA = parseInt(a.id.replace('id_', ''));
+                    const idB = parseInt(b.id.replace('id_', ''));
+                    return idA - idB;
+                });
+
+                renderArticles(allArticles);
                 statusEl.innerHTML = `<span class="mr-2 text-green-500">✅</span> 共加载 ${allArticles.length} 篇文章`;
 
             } catch (error) {
@@ -693,8 +582,9 @@
 
         function parseMdContent(rawContent) {
             const result = {
-                username: '',
-                created_at: '',
+                title: '',
+                author: '',
+                createTime: '',
                 content: ''
             };
 
@@ -704,19 +594,21 @@
                 
                 if (match && match[1]) {
                     const yamlContent = match[1];
-                    const usernameMatch = yamlContent.match(/username:\s*(.+)/);
-                    if (usernameMatch) result.username = usernameMatch[1].trim();
+                    const titleMatch = yamlContent.match(/title:\s*(.+)/);
+                    const authorMatch = yamlContent.match(/author:\s*(.+)/);
+                    const timeMatch = yamlContent.match(/createTime:\s*(.+)/);
                     
-                    const createdAtMatch = yamlContent.match(/created_at:\s*(.+)/);
-                    if (createdAtMatch) result.created_at = formatDate(createdAtMatch[1].trim());
+                    if (titleMatch) result.title = titleMatch[1].trim();
+                    if (authorMatch) result.author = authorMatch[1].trim();
+                    if (timeMatch) result.createTime = timeMatch[1].trim();
                     
                     result.content = rawContent.replace(yamlRegex, '').trim();
                 } else {
                     result.content = rawContent.trim();
                 }
 
-                if (result.content.length > 180) {
-                    result.content = result.content.substring(0, 180) + '...';
+                if (result.content.length > 200) {
+                    result.content = result.content.substring(0, 200) + '...';
                 }
 
                 result.content = result.content
@@ -727,24 +619,19 @@
                     .replace(/\n/g, ' ')
                     .replace(/\s+/g, ' ');
             } catch (e) {
-                result.content = '内容解析失败（编码问题）';
+                result.content = '内容解析失败';
             }
 
             return result;
         }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return '未知时间';
-            
-            return date.toLocaleDateString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hour = String(date.getHours()).padStart(2, '0');
+            const minute = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hour}:${minute}`;
         }
 
         function renderArticles(articles) {
@@ -765,23 +652,24 @@
                 card.className = 'bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-200';
                 card.innerHTML = `
                     <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
+                        <div class="flex justify-between items-start mb-3">
                             <span class="text-xs font-medium text-gray-800 bg-gray-100 px-2.5 py-1 rounded-full">${article.id}</span>
-                            <span class="text-xs text-gray-600">${article.createdAt}</span>
+                            <span class="text-xs text-gray-500">${article.createTime}</span>
                         </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">${article.title}</h3>
                         <div class="flex items-center mb-4">
-                            <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-primary mr-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-primary mr-2">
                                 <span>👤</span>
                             </div>
-                            <span class="text-sm font-semibold text-gray-800">${article.username}</span>
+                            <span class="text-sm text-gray-600">${article.author}</span>
                         </div>
-                        <p class="text-gray-700 text-sm mb-6 leading-relaxed text-balance">${article.content}</p>
+                        <p class="text-gray-600 text-sm mb-6 leading-relaxed text-balance">${article.content}</p>
                         <div class="flex gap-4 mt-auto">
                             <a href="${article.rawUrl}" target="_blank" class="text-primary hover:text-gray-800 text-sm flex items-center transition-colors">
-                                <span class="mr-1.5">📝</span> 查看原文
+                                <span class="mr-1">📄</span> 查看原文
                             </a>
-                            <a href="${article.githubUrl}" target="_blank" class="text-gray-700 hover:text-gray-900 text-sm flex items-center transition-colors">
-                                <span class="mr-1.5">🐙</span> GitHub
+                            <a href="${article.githubUrl}" target="_blank" class="text-gray-600 hover:text-gray-900 text-sm flex items-center transition-colors">
+                                <span class="mr-1">🐙</span> 编辑
                             </a>
                         </div>
                     </div>
@@ -807,7 +695,9 @@
                 }
                 
                 const filteredArticles = allArticles.filter(article => 
-                    article.username.toLowerCase().includes(keyword) || 
+                    article.id.toLowerCase().includes(keyword) || 
+                    article.title.toLowerCase().includes(keyword) || 
+                    article.author.toLowerCase().includes(keyword) || 
                     article.content.toLowerCase().includes(keyword)
                 );
                 
