@@ -579,8 +579,8 @@
             OWNER: 'HYQY2012',
             REPO: 'article',
             BRANCH: 'main',
-            API_URL: `https://ghproxy.com/https://api.github.com/repos/HYQY2012/article/contents/articles`,
-            TIMEOUT: 20000
+            API_URL: `https://gh.api.99988866.xyz/https://api.github.com/repos/HYQY2012/article/contents/articles`,
+            TIMEOUT: 30000
         };
 
         let allArticles = [];
@@ -616,7 +616,7 @@
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(`请求失败 [${response.status}]：${errorData.message || '无法连接到GitHub API'}`);
+                    throw new Error(`请求失败 [${response.status}]`);
                 }
                 
                 const files = await response.json();
@@ -639,7 +639,7 @@
                 for (const chunk of chunks) {
                     const articlesChunk = await Promise.allSettled(
                         chunk.map(async (file) => {
-                            const proxyFileUrl = `https://ghproxy.com/${file.url}`;
+                            const proxyFileUrl = `https://gh.api.99988866.xyz/${file.url}`;
                             const contentResponse = await fetch(proxyFileUrl, {
                                 headers: {
                                     'Cache-Control': 'public, max-age=300',
@@ -667,7 +667,7 @@
                                 username: username || '未知作者',
                                 createdAt: created_at || '未知时间',
                                 content: content || '',
-                                rawUrl: `https://ghproxy.com/${file.download_url}`,
+                                rawUrl: `https://gh.api.99988866.xyz/${file.download_url}`,
                                 githubUrl: file.html_url
                             };
                         })
@@ -684,16 +684,7 @@
                 statusEl.innerHTML = `<span class="mr-2 text-green-500">✅</span> 共加载 ${allArticles.length} 篇文章`;
 
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    statusEl.innerHTML = '<span class="mr-2 text-orange-500">⏰</span> 请求超时，请检查网络或稍后重试';
-                } else if (error.message.includes('Failed to fetch')) {
-                    statusEl.innerHTML = '<span class="mr-2 text-red-500">📶</span> 网络请求失败，已自动使用代理重试...';
-                    setTimeout(() => fetchArticles(), 3000);
-                } else if (error.message.includes('encoding') || error.message.includes('字符')) {
-                    statusEl.innerHTML = '<span class="mr-2 text-red-500">⚠️</span> 编码解析失败，已自动兼容处理';
-                } else {
-                    statusEl.innerHTML = `<span class="mr-2 text-red-500">⚠️</span> ${error.message}`;
-                }
+                statusEl.style.display = 'none';
                 document.getElementById('emptyState').classList.remove('hidden');
             } finally {
                 isLoading = false;
