@@ -566,8 +566,8 @@
             <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-100 mb-6">
                 <span class="text-5xl text-gray-800">📄</span>
             </div>
-            <h3 class="text-2xl text-gray-800 mb-3 font-medium">暂无相关文章</h3>
-            <p class="text-gray-600 mb-6 max-w-md mx-auto">试试更换搜索关键词，或点击上传按钮分享你的第一篇内容</p>
+            <h3 class="text-2xl text-gray-800 mb-3 font-medium">无记录</h3>
+            <p class="text-gray-600 mb-6 max-w-md mx-auto">暂无相关文章</p>
             <a href="upload/" class="inline-flex items-center gap-2 py-2 px-6 rounded-full bg-primary text-white hover:bg-gray-800 transition-colors">
                 <span class="mr-1">➕</span> 上传第一篇文章
             </a>
@@ -579,7 +579,7 @@
             OWNER: 'HYQY2012',
             REPO: 'article',
             BRANCH: 'main',
-            API_URL: `https://ghproxy.com/https://api.github.com/repos/HYQY2012/article/contents/`,
+            API_URL: `https://ghproxy.com/https://api.github.com/repos/HYQY2012/article/contents/articles`,
             TIMEOUT: 20000
         };
 
@@ -623,7 +623,7 @@
                 const mdFiles = files.filter(file => file.name.endsWith('.md') && file.name.startsWith('id_'));
                 
                 if (mdFiles.length === 0) {
-                    statusEl.innerHTML = '<span class="mr-2 text-primary">ℹ️</span> 仓库中暂无MD文件，点击上传添加内容';
+                    statusEl.style.display = 'none';
                     document.getElementById('emptyState').classList.remove('hidden');
                     isLoading = false;
                     return;
