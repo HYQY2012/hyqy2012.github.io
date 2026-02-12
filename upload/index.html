@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>内容投稿</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            -webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            -moz-box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .navbar {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            gap: 10px;
+            color: #ff0000;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .upload-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            -webkit-border-radius: 8px;
+            -moz-border-radius: 8px;
+            -webkit-box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            -moz-box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .upload-card h2 {
+            color: #202124;
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #202124;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            min-height: 300px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+        }
+        
+        .btn {
+            background-color: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            -webkit-transition: background-color 0.2s;
+            -moz-transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #cc0000;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            display: none;
+        }
+        
+        .alert-error {
+            background-color: #ffebee;
+            color: #b71c1c;
+            display: block;
+        }
+        
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+        
+        .hint {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        @media screen and (max-width: 768px) {
+            .upload-card {
+                padding: 20px;
+            }
+            
+            .form-group textarea {
+                min-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="logo">
+                <span>▶</span>
+                <span>内容投稿</span>
+            </div>
+            <div>YouTube风格投稿工具</div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="upload-card">
+            <h2>内容投稿</h2>
+            
+            <div id="message" class="alert"></div>
+            
+            <form id="submitForm" method="POST" action="submit.php">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" placeholder="请输入您的用户名" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">内容 (支持Markdown)</label>
+                    <textarea id="content" name="content" placeholder="请输入Markdown格式的内容..."></textarea>
+                    <div class="hint">支持Markdown语法：# 标题、**粗体**、*斜体*、[链接](url) 等</div>
+                </div>
+                
+                <button type="submit" class="btn">提交投稿</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('submitForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const message = document.getElementById('message');
+            
+            fetch('submit.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                message.className = 'alert';
+                if (data.error) {
+                    message.classList.add('alert-error');
+                    message.textContent = data.error;
+                } else {
+                    message.classList.add('alert-success');
+                    message.textContent = data.success;
+                    document.getElementById('submitForm').reset();
+                }
+            })
+            .catch(error => {
+                message.className = 'alert alert-error';
+                message.textContent = '提交失败，请重试';
+            });
+        });
+    </script>
+</body>
+</html>
