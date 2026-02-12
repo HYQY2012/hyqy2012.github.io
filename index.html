@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -21,20 +22,219 @@
             theme: {
                 extend: {
                     colors: {
-                        youtube: '#FF0000',
-                        dark: '#181818',
+                        primary: '#FF0000',
+                        dark: '#0F0F0F',
                         light: '#F9F9F9',
                         gray: {
-                            100: '#F1F1F1',
-                            200: '#E1E1E1',
-                            300: '#909090',
-                            800: '#272727'
+                            50: '#F9FAFB',
+                            100: '#F3F4F6',
+                            200: '#E5E7EB',
+                            300: '#D1D5DB',
+                            400: '#9CA3AF',
+                            500: '#6B7280',
+                            600: '#4B5563',
+                            700: '#374151',
+                            800: '#1F2937',
+                            900: '#111827'
                         }
                     },
                     fontFamily: {
-                        youtube: ['Roboto', 'Arial', 'sans-serif'],
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
                     },
                     animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'scale-up': 'scaleUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        scaleUp: {
+                            '0%': { transform: 'scale(0.95)' },
+                            '100%': { transform: 'scale(1)' },
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/20;
+            }
+            .search-focus {
+                @apply focus:ring-2 focus:ring-primary/30 focus:border-primary;
+            }
+            .text-balance {
+                text-wrap: balance;
+            }
+            .backdrop-blur-xs {
+                backdrop-filter: blur(2px);
+            }
+        }
+    </style>
+    <style>
+        img {
+            content-visibility: auto;
+            loading: lazy;
+        }
+        body {
+            font-display: swap;
+            scroll-behavior: smooth;
+        }
+        #articlesGrid {
+            contain: layout paint;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff0000;
+        }
+    </style>
+</head>
+<body class="font-inter bg-light text-dark min-h-screen">
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-xs border-b border-gray-200">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <img src="https://www.xn--vqq068m4ham0n.space/img/logo.svg" alt="Logo" class="w-9 h-9" width="36" height="36">
+                <h1 class="text-xl md:text-2xl font-bold text-primary">HYQY Chat</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center flex-1 max-w-2xl mx-8">
+                <div class="relative w-full">
+                    <input 
+                        type="text" 
+                        id="searchInput"
+                        placeholder="搜索文章内容/作者..." 
+                        class="w-full py-2.5 px-4 pr-12 rounded-full border border-gray-200 search-focus outline-none bg-white shadow-sm"
+                    >
+                    <button id="searchBtn" class="absolute right-0 top-0 h-full px-4 rounded-r-full hover:bg-gray-100 transition-colors flex items-center justify-center">
+                        <i class="fa fa-search text-gray-400"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-5">
+                <button class="md:hidden text-gray-500 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100">
+                    <i class="fa fa-search text-lg"></i>
+                </button>
+                
+                <a href="upload/" class="flex items-center gap-2 py-2 px-4 rounded-full bg-primary/5 hover:bg-primary/10 transition-colors border border-primary/20">
+                    <i class="fa fa-upload text-lg text-primary"></i>
+                    <span class="hidden sm:inline text-sm font-medium text-primary">上传内容</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div id="status" class="mb-8 py-4 px-6 rounded-xl bg-gray-100 text-center border border-gray-200">
+            <i class="fa fa-circle-o-notch fa-spin mr-2 text-primary animate-pulse-slow"></i>
+            正在加载文章内容...
+        </div>
+
+        <div id="articlesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fade-in">
+        </div>
+
+        <div id="emptyState" class="hidden py-24 text-center">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-100 mb-6">
+                <i class="fa fa-file-text-o text-5xl text-gray-400"></i>
+            </div>
+            <h3 class="text-2xl text-gray-500 mb-3 font-medium">暂无相关文章</h3>
+            <p class="text-gray-400 mb-6 max-w-md mx-auto">试试更换搜索关键词，或点击上传按钮分享你的第一篇内容</p>
+            <a href="upload/" class="inline-flex items-center gap-2 py-2 px-6 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors">
+                <i class="fa fa-plus mr-1"></i> 上传第一篇文章
+            </a>
+        </div>
+    </main>
+
+    <script>
+        const CONFIG = {
+            OWNER: 'HYQY2012',
+            REPO: 'article',
+            BRANCH: 'main',
+            API_URL: `https://api.github.com/repos/HYQY2012/article/contents/`,
+            TIMEOUT: 15000
+        };
+
+        let allArticles = [];
+        let isLoading = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchArticles();
+            bindSearchEvents();
+        });
+
+        async function fetchArticles() {
+            if (isLoading) return;
+            isLoading = true;
+            const statusEl = document.getElementById('status');
+            
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
+                
+                const response = await fetch(CONFIG.API_URL, {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Cache-Control': 'public, max-age=300',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    },
+                    signal: controller.signal,
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`请求失败 [${response.status}]：${errorData.message || '无法连接到GitHub API'}`);
+                }
+                
+                const files = await response.json();
+                const mdFiles = files.filter(file => file.name.endsWith('.md') && file.name.startsWith('id_'));
+                
+                if (mdFiles.length === 0) {
+                    statusEl.innerHTML = '<i class="fa fa-info-circle mr-2 text-primary"></i> 仓库中暂无MD文件，点击上传添加内容';
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    isLoading = false;
+                    return;
+                }
+
+                const chunkSize = 8;
+                const chunks = [];
+                for (let i = 0; i < mdFiles.length; i += chunkSize) {
+                    chunks.push(mdFiles.slice(i, i + chunkSize));
+                }
+
+                allArticles = [];
+                for (const chunk of chunks) {
+                    const articlesChunk = await Promise.allSettled(
+                        chunk.map(async (file) => {
+                            const contentResponse = await fetch(file.url, {
+                                headers: {
+                                    'Cache-Control': 'public, max-age=300',
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                                },
+                           animation: {
                         'fade-in': 'fadeIn 0.5s ease-in-out',
                         'scale-up': 'scaleUp 0.3s ease-out',
                     },
