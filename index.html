@@ -3,726 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="robots" content="index, follow">
-    <meta name="description" content="HYQY Article Platform">
-    <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="/img/logo.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/img/logo.svg">
-    <title>HYQY 文章管理</title>
+    <title>何逸钦远 - 内容中心</title>
     <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #333333;
+            --accent: #666666;
+            --light: #f8f8f8;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
-        
-        :root {
-            --primary: #000000;
-            --light: #FFFFFF;
-            --gray-50: #F9FAFB;
-            --gray-100: #F3F4F6;
-            --gray-200: #E5E7EB;
-            --gray-300: #D1D5DB;
-            --gray-400: #9CA3AF;
-            --gray-500: #6B7280;
-            --gray-600: #4B5563;
-            --gray-700: #374151;
-            --gray-800: #1F2937;
-            --gray-900: #111827;
-            --green-500: #22C55E;
-        }
-        
+
         body {
             background-color: var(--light);
             color: var(--primary);
             min-height: 100vh;
-            scroll-behavior: smooth;
+            line-height: 1.6;
         }
-        
-        img {
-            content-visibility: auto;
-            loading: lazy;
-        }
-        
-        #articlesGrid {
-            contain: layout paint;
-        }
-        
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--gray-400);
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gray-600);
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 16px;
-        }
-        
-        .flex {
+
+        /* 导航栏 */
+        .navbar {
+            background-color: white;
+            padding: 1.2rem 5%;
             display: flex;
-        }
-        
-        .items-center {
-            align-items: center;
-        }
-        
-        .justify-between {
             justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
         }
-        
-        .gap-2 {
-            gap: 8px;
-        }
-        
-        .gap-4 {
-            gap: 16px;
-        }
-        
-        .gap-5 {
-            gap: 20px;
-        }
-        
-        .py-3 {
-            padding-top: 12px;
-            padding-bottom: 12px;
-        }
-        
-        .py-4 {
-            padding-top: 16px;
-            padding-bottom: 16px;
-        }
-        
-        .py-8 {
-            padding-top: 32px;
-            padding-bottom: 32px;
-        }
-        
-        .px-4 {
-            padding-left: 16px;
-            padding-right: 16px;
-        }
-        
-        .px-6 {
-            padding-left: 24px;
-            padding-right: 24px;
-        }
-        
-        .mb-8 {
-            margin-bottom: 32px;
-        }
-        
-        .text-xl {
-            font-size: 20px;
-        }
-        
-        .text-2xl {
-            font-size: 24px;
-        }
-        
-        .text-sm {
-            font-size: 14px;
-        }
-        
-        .text-xs {
-            font-size: 12px;
-        }
-        
-        .font-bold {
+
+        .logo {
+            font-size: 1.5rem;
             font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: -0.02em;
         }
-        
-        .font-semibold {
-            font-weight: 600;
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
         }
-        
-        .font-medium {
+
+        .nav-link {
+            color: var(--secondary);
+            text-decoration: none;
             font-weight: 500;
+            transition: var(--transition);
         }
-        
-        .rounded-xl {
-            border-radius: 12px;
-        }
-        
-        .rounded-full {
-            border-radius: 9999px;
-        }
-        
-        .shadow-md {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        .overflow-hidden {
-            overflow: hidden;
-        }
-        
-        .border {
-            border: 1px solid;
-        }
-        
-        .border-gray-200 {
-            border-color: var(--gray-200);
-        }
-        
-        .bg-white {
-            background-color: var(--light);
-        }
-        
-        .bg-gray-100 {
-            background-color: var(--gray-100);
-        }
-        
-        .text-center {
-            text-align: center;
-        }
-        
-        .text-gray-500 {
-            color: var(--gray-500);
-        }
-        
-        .text-gray-600 {
-            color: var(--gray-600);
-        }
-        
-        .text-gray-800 {
-            color: var(--gray-800);
-        }
-        
-        .text-primary {
+
+        .nav-link:hover {
             color: var(--primary);
         }
-        
-        .text-white {
-            color: var(--light);
+
+        .publish-btn-nav {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
         }
-        
-        .text-green-500 {
-            color: var(--green-500);
+
+        .publish-btn-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
-        .hover\:bg-gray-100:hover {
-            background-color: var(--gray-100);
+
+        /* 内容展示区 */
+        .content-section {
+            padding: 5rem 5%;
         }
-        
-        .hover\:bg-gray-200:hover {
-            background-color: var(--gray-200);
-        }
-        
-        .hover\:bg-gray-800:hover {
-            background-color: var(--gray-800);
-        }
-        
-        .hover\:text-gray-800:hover {
-            color: var(--gray-800);
-        }
-        
-        .hover\:text-gray-900:hover {
-            color: var(--gray-900);
-        }
-        
-        .transition-colors {
-            transition-property: color, background-color, border-color;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 150ms;
-        }
-        
-        .outline-none {
-            outline: 2px solid transparent;
-            outline-offset: 2px;
-        }
-        
-        .relative {
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4rem;
             position: relative;
         }
-        
-        .absolute {
-            position: absolute;
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: var(--primary);
+            margin: 1rem auto 0;
+            border-radius: 3px;
         }
-        
-        .right-0 {
-            right: 0px;
-        }
-        
-        .top-0 {
-            top: 0px;
-        }
-        
-        .h-full {
-            height: 100%;
-        }
-        
-        .w-full {
-            width: 100%;
-        }
-        
-        .w-9 {
-            width: 36px;
-        }
-        
-        .h-9 {
-            height: 36px;
-        }
-        
-        .w-24 {
-            width: 96px;
-        }
-        
-        .h-24 {
-            height: 96px;
-        }
-        
-        .min-h-screen {
-            min-height: 100vh;
-        }
-        
-        .z-50 {
-            z-index: 50;
-        }
-        
-        .sticky {
-            position: sticky;
-        }
-        
-        .backdrop-blur-xs {
-            backdrop-filter: blur(2px);
-        }
-        
-        .card-hover {
-            transition: all 300ms ease;
-        }
-        
-        .card-hover:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
-            border-color: var(--gray-300);
-        }
-        
-        .text-balance {
-            text-wrap: balance;
-        }
-        
-        .leading-relaxed {
-            line-height: 1.625;
-        }
-        
-        .mt-auto {
-            margin-top: auto;
-        }
-        
-        .py-2\.5 {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
-        
-        .pr-12 {
-            padding-right: 48px;
-        }
-        
-        .px-2\.5 {
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-        
-        .py-24 {
-            padding-top: 96px;
-            padding-bottom: 96px;
-        }
-        
-        .max-w-md {
-            max-width: 28rem;
-        }
-        
-        .mx-auto {
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .p-2 {
-            padding: 8px;
-        }
-        
-        .p-6 {
-            padding: 24px;
-        }
-        
-        .inline-flex {
-            display: inline-flex;
-        }
-        
-        .spin {
-            animation: spin 2s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .grid {
+
+        .content-grid {
             display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
         }
-        
-        .grid-cols-1 {
-            grid-template-columns: repeat(1, minmax(0, 1fr));
+
+        .content-card {
+            background-color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+            transition: var(--transition);
         }
-        
-        .gap-6 {
-            gap: 24px;
+
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
         }
-        
-        .hidden {
-            display: none;
+
+        .card-author {
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--primary);
         }
-        
-        @media (min-width: 640px) {
-            .sm\:grid-cols-2 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        .card-time {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .card-content {
+            color: var(--secondary);
+            line-height: 1.7;
+        }
+
+        /* 加载提示 */
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
             }
-            .sm\:inline {
-                display: inline;
-            }
-        }
-        
-        @media (min-width: 768px) {
-            .md\:grid-cols-3 {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-            .md\:flex {
-                display: flex;
-            }
-            .md\:hidden {
+            
+            .nav-links {
                 display: none;
             }
         }
-        
-        @media (min-width: 1024px) {
-            .lg\:grid-cols-4 {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
-        }
     </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="min-h-screen bg-light text-primary">
-    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-xs border border-gray-200">
-        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-primary">
-                    <span>📝</span>
-                </div>
-                <h1 class="text-xl md:text-2xl font-bold text-primary">HYQY 文章平台</h1>
-            </div>
-            
-            <div class="hidden md:flex items-center flex-1 max-w-2xl mx-8">
-                <div class="relative w-full">
-                    <input 
-                        type="text" 
-                        id="searchInput"
-                        placeholder="搜索文章内容/编号..." 
-                        class="w-full py-2.5 px-4 pr-12 rounded-full border border-gray-200 outline-none bg-white shadow-md"
-                    >
-                    <button id="searchBtn" class="absolute right-0 top-0 h-full px-4 rounded-r-full hover:bg-gray-100 transition-colors flex items-center justify-center">
-                        <span class="text-gray-800">🔍</span>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-5">
-                <button class="md:hidden text-gray-800 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100">
-                    <span class="text-lg">🔍</span>
-                </button>
-                <a href="https://github.com/HYQY2012/article/tree/main/articles" target="_blank" class="flex items-center gap-2 py-2 px-4 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200">
-                    <span class="text-lg text-primary">🐙</span>
-                    <span class="hidden sm:inline text-sm font-medium text-primary">GitHub</span>
-                </a>
-            </div>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="#" class="logo">何逸钦远</a>
+        <div class="nav-links">
+            <a href="#" class="nav-link">首页</a>
+            <a href="#content" class="nav-link">内容列表</a>
+            <a href="#" class="nav-link">关于</a>
         </div>
-    </header>
+        <a href="./upload/" class="publish-btn-nav">发布内容</a>
+    </nav>
 
-    <main class="container mx-auto px-4 py-8">
-        <div id="status" class="mb-8 py-4 px-6 rounded-xl bg-gray-100 text-center border border-gray-200">
-            <span class="spin mr-2 text-primary">🔄</span>
-            正在加载文章内容...
-        </div>
-
-        <div id="articlesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        </div>
-
-        <div id="emptyState" class="hidden py-24 text-center">
-            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-100 mb-6">
-                <span class="text-5xl text-gray-800">📄</span>
+    <!-- 内容展示区 -->
+    <section id="content" class="content-section">
+        <h2 class="section-title">已发布内容</h2>
+        <div class="content-grid" id="content-grid">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                加载中...
             </div>
-            <h3 class="text-2xl text-gray-800 mb-3 font-medium">无记录</h3>
-            <p class="text-gray-600 mb-6 max-w-md mx-auto">暂无相关文章</p>
-            <a href="https://github.com/HYQY2012/article/tree/main/articles" target="_blank" class="inline-flex items-center gap-2 py-2 px-6 rounded-full bg-primary text-white hover:bg-gray-800 transition-colors">
-                <span class="mr-1">🐙</span> 前往GitHub查看
-            </a>
         </div>
-    </main>
+    </section>
 
     <script>
-        const CONFIG = {
-            OWNER: 'HYQY2012',
-            REPO: 'article',
-            PATH: 'articles',
-            API_URL: 'https://gh.api.99988866.xyz/https://api.github.com/repos/HYQY2012/article/contents/articles',
-            TIMEOUT: 50000
+        const GITHUB_CONFIG = {
+            owner: 'HYQY2012',
+            repo: 'hyqy2012.github.io',
+            path: 'articles',
+            apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
+            token: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN'
         };
 
-        let allArticles = [];
-        let isLoading = false;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchArticles();
-            bindSearchEvents();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPublishedContent();
         });
 
-        async function fetchArticles() {
-            if (isLoading) return;
-            isLoading = true;
-            const statusEl = document.getElementById('status');
+        async function loadPublishedContent() {
+            const contentGrid = document.getElementById('content-grid');
             
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
-                
-                const response = await fetch(CONFIG.API_URL, {
+                const response = await fetch(GITHUB_CONFIG.apiUrl, {
                     headers: {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Cache-Control': 'public, max-age=300',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
-                    },
-                    signal: controller.signal,
-                    method: 'GET',
-                    mode: 'cors',
-                    credentials: 'omit'
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
                 });
 
-                clearTimeout(timeoutId);
-                
                 if (!response.ok) {
-                    throw new Error(`请求失败 [${response.status}]`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
+
+                const files = await response.json();
                 
-                const data = await response.json();
-                const mdFiles = Array.isArray(data) ? data.filter(file => {
-                    return typeof file.name === 'string' 
-                        && file.name.endsWith('.md') 
-                        && /^id_\d+\.md$/.test(file.name);
-                }) : [];
-                
-                if (mdFiles.length === 0) {
-                    statusEl.style.display = 'none';
-                    document.getElementById('emptyState').classList.remove('hidden');
-                    isLoading = false;
+                const jsonFiles = files
+                    .filter(file => file.name.endsWith('.json') && file.name.startsWith('data_'))
+                    .sort((a, b) => new Date(b.commit.commit.author.date) - new Date(a.commit.commit.author.date));
+
+                if (jsonFiles.length === 0) {
+                    contentGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
+                            <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <h3>暂无已发布内容</h3>
+                            <p style="margin-top: 0.5rem;">点击"发布内容"按钮创建你的第一条内容</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                allArticles = [];
-                for (const file of mdFiles) {
-                    try {
-                        const contentResponse = await fetch(file.download_url, {
-                            headers: {
-                                'Cache-Control': 'public, max-age=300',
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                            },
-                            mode: 'cors',
-                            credentials: 'omit'
-                        });
-                        
-                        if (!contentResponse.ok) continue;
-                        
-                        const contentData = await contentResponse.text();
-                        const { title, author, createTime, content } = parseMdContent(contentData);
-                        
-                        allArticles.push({
-                            id: file.name.replace('.md', ''),
-                            filename: file.name,
-                            title: title || file.name,
-                            author: author || 'HYQY2012',
-                            createTime: createTime || formatDate(new Date()),
-                            content: content || '暂无文章内容',
-                            rawUrl: file.download_url,
-                            githubUrl: file.html_url
-                        });
-                    } catch (e) {
-                        continue;
-                    }
-                }
+                const contentPromises = jsonFiles.map(file => fetchFileContent(file));
+                const contents = await Promise.all(contentPromises);
 
-                allArticles.sort((a, b) => {
-                    const idA = parseInt(a.id.replace('id_', ''));
-                    const idB = parseInt(b.id.replace('id_', ''));
-                    return idA - idB;
-                });
-
-                renderArticles(allArticles);
-                statusEl.innerHTML = `<span class="mr-2 text-green-500">✅</span> 共加载 ${allArticles.length} 篇文章`;
+                contentGrid.innerHTML = contents.map(content => `
+                    <div class="content-card">
+                        <span class="card-author">${content.user}</span>
+                        <span class="card-time">${formatDate(content.publishTime)}</span>
+                        <div class="card-content">${content.content.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `).join('');
 
             } catch (error) {
-                statusEl.style.display = 'none';
-                document.getElementById('emptyState').classList.remove('hidden');
-            } finally {
-                isLoading = false;
-            }
-        }
-
-        function parseMdContent(rawContent) {
-            const result = {
-                title: '',
-                author: '',
-                createTime: '',
-                content: ''
-            };
-
-            try {
-                const yamlRegex = /^---\n([\s\S]*?)\n---/;
-                const match = rawContent.match(yamlRegex);
-                
-                if (match && match[1]) {
-                    const yamlContent = match[1];
-                    const titleMatch = yamlContent.match(/title:\s*(.+)/);
-                    const authorMatch = yamlContent.match(/author:\s*(.+)/);
-                    const timeMatch = yamlContent.match(/createTime:\s*(.+)/);
-                    
-                    if (titleMatch) result.title = titleMatch[1].trim();
-                    if (authorMatch) result.author = authorMatch[1].trim();
-                    if (timeMatch) result.createTime = timeMatch[1].trim();
-                    
-                    result.content = rawContent.replace(yamlRegex, '').trim();
-                } else {
-                    result.content = rawContent.trim();
-                }
-
-                if (result.content.length > 200) {
-                    result.content = result.content.substring(0, 200) + '...';
-                }
-
-                result.content = result.content
-                    .replace(/\*\*(.*?)\*\*/g, '$1')
-                    .replace(/\*(.*?)\*/g, '$1')
-                    .replace(/#+/g, '')
-                    .replace(/\[.*?\]\(.*?\)/g, '')
-                    .replace(/\n/g, ' ')
-                    .replace(/\s+/g, ' ');
-            } catch (e) {
-                result.content = '内容解析失败';
-            }
-
-            return result;
-        }
-
-        function formatDate(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hour = String(date.getHours()).padStart(2, '0');
-            const minute = String(date.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hour}:${minute}`;
-        }
-
-        function renderArticles(articles) {
-            const gridEl = document.getElementById('articlesGrid');
-            const emptyStateEl = document.getElementById('emptyState');
-            
-            if (articles.length === 0) {
-                gridEl.innerHTML = '';
-                emptyStateEl.classList.remove('hidden');
-                return;
-            }
-            
-            emptyStateEl.classList.add('hidden');
-            
-            const fragment = document.createDocumentFragment();
-            articles.forEach(article => {
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-200';
-                card.innerHTML = `
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="text-xs font-medium text-gray-800 bg-gray-100 px-2.5 py-1 rounded-full">${article.id}</span>
-                            <span class="text-xs text-gray-500">${article.createTime}</span>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">${article.title}</h3>
-                        <div class="flex items-center mb-4">
-                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-primary mr-2">
-                                <span>👤</span>
-                            </div>
-                            <span class="text-sm text-gray-600">${article.author}</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-6 leading-relaxed text-balance">${article.content}</p>
-                        <div class="flex gap-4 mt-auto">
-                            <a href="${article.rawUrl}" target="_blank" class="text-primary hover:text-gray-800 text-sm flex items-center transition-colors">
-                                <span class="mr-1">📄</span> 查看原文
-                            </a>
-                            <a href="${article.githubUrl}" target="_blank" class="text-gray-600 hover:text-gray-900 text-sm flex items-center transition-colors">
-                                <span class="mr-1">🐙</span> 编辑
-                            </a>
-                        </div>
+                contentGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--error);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h3>加载失败</h3>
+                        <p style="margin-top: 0.5rem;">${error.message}</p>
                     </div>
                 `;
-                fragment.appendChild(card);
-            });
-            
-            gridEl.innerHTML = '';
-            gridEl.appendChild(fragment);
+                console.error('加载内容失败:', error);
+            }
         }
 
-        function bindSearchEvents() {
-            const searchInput = document.getElementById('searchInput');
-            const searchBtn = document.getElementById('searchBtn');
-            let searchTimeout;
-            
-            const handleSearch = () => {
-                const keyword = searchInput.value.trim().toLowerCase();
-                
-                if (!keyword) {
-                    renderArticles(allArticles);
-                    return;
-                }
-                
-                const filteredArticles = allArticles.filter(article => 
-                    article.id.toLowerCase().includes(keyword) || 
-                    article.title.toLowerCase().includes(keyword) || 
-                    article.author.toLowerCase().includes(keyword) || 
-                    article.content.toLowerCase().includes(keyword)
-                );
-                
-                renderArticles(filteredArticles);
-            };
+        async function fetchFileContent(file) {
+            const response = await fetch(file.download_url);
+            const content = await response.json();
+            return content;
+        }
 
-            searchBtn.addEventListener('click', handleSearch);
-            searchInput.addEventListener('input', () => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(handleSearch, 300);
-            });
-            searchInput.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') {
-                    clearTimeout(searchTimeout);
-                    handleSearch();
-                }
-            });
-            
-            const mobileSearchBtn = document.querySelector('.md\\:hidden').parentElement;
-            mobileSearchBtn.addEventListener('click', () => {
-                const searchContainer = document.querySelector('.md\\:flex.items-center');
-                searchContainer.classList.toggle('hidden');
-                searchContainer.classList.toggle('flex');
-                searchInput.focus();
-            });
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
         }
     </script>
 </body>
