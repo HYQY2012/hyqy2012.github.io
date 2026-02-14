@@ -1,16 +1,17 @@
-<!-- 欢迎！ -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYQY</title>
+    <title>HYQY Chat</title>
     <style>
         :root {
             --primary: #1a1a1a;
             --secondary: #333333;
             --accent: #666666;
             --light: #f8f8f8;
+            --success: #22c55e;
+            --error: #ef4444;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -35,6 +36,312 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .publish-btn-nav {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .publish-btn-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-section {
+            padding: 5rem 5%;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background-color: var(--primary);
+            margin: 1rem auto 0;
+            border-radius: 3px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .content-card {
+            background-color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+            transition: var(--transition);
+        }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-author {
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--primary);
+        }
+
+        .card-time {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .card-content {
+            color: var(--secondary);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .like-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .like-btn:hover {
+            color: var(--error);
+        }
+
+        .like-btn.liked {
+            color: var(--error);
+        }
+
+        .comment-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .comment-btn:hover {
+            color: var(--primary);
+        }
+
+        .comments-section {
+            margin-top: 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .comments-section.active {
+            max-height: 500px;
+        }
+
+        .comment-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            resize: none;
+            min-height: 80px;
+            font-size: 0.95rem;
+        }
+
+        .comment-submit {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .comment-submit:hover {
+            opacity: 0.9;
+        }
+
+        .comments-list {
+            margin-top: 1rem;
+        }
+
+        .comment-item {
+            padding: 1rem;
+            background-color: var(--light);
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .comment-text {
+            font-size: 0.95rem;
+            color: var(--secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="#" class="logo">HYQY Chat</a>
+        <a href="./upload/" class="publish-btn-nav">发布内容</a>
+    </nav>
+
+    <section id="content" class="content-section">
+        <h2 class="section-title">聊天内容</h2>
+        <div class="content-grid" id="content-grid">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                加载中...
+            </div>
+        </div>
+    </section>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const GITHUB_CONFIG = {
+            owner: 'HYQY2012',
+            repo: 'hyqy2012.github.io',
+            path: 'articles',
+            apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
+            token: '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'
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPublishedContent();
+        });
+
+        async function loadPublishedContent() {
+            const contentGrid = document.getElementById('content-grid');
+            
+            try {
+                const response = await fetch(GITHUB_CONFIG.apiUrl, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const files = await response.json();
+                
+                const jsonFiles = files
+                    .filter(file => file.name.endsWith('.json') && file.name.startsWith('data_'))
+                    .sort((a, b) => new Date(b.commit.commit.author.date) - new Date(a.commit.commit.author.date));
+
+                if (jsonFiles.length === 0) {
+                    contentGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
+                            <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <h3>暂无聊天内容</h3>
+                            <p style="margin-top: 0.5rem;">点击"发布内容"按钮创建第一条聊天内容</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const contentPromises = jsonFiles.map(file => fetchFileContent(file));
+                const contents = await Promise.all(contentPromises);
+
+                contentGrid.innerHTML = contents.map((content, index) => {
+                    const file = jsonFiles[index];
+                    const fileId = file.name;
+                    const likesCount = content.likes || 0;
+                    const userLiked = content.userLiked || [];
+                    const comments = content.comments || [];
+                    const isLiked = userLiked.includes('current_user');
+
+                    return `
+                        <div class="content-c            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             position: sticky;
             top: 0;
             z-index: 100;
