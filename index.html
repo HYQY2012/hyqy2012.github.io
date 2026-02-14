@@ -295,7 +295,6 @@
             background-color: white;
         }
 
-        /* 新增：离线模式样式 */
         .offline-mode {
             grid-column: 1/-1;
             text-align: center;
@@ -350,32 +349,26 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // 配置项
         const GITHUB_CONFIG = {
             owner: 'HYQY2012',
             repo: 'hyqy2012.github.io',
             path: 'articles',
             apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
-            // 重要：替换为你的有效GitHub Personal Access Token
-            // 生成地址：https://github.com/settings/tokens (需要repo权限)
-            token: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN'
+            token: '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'
         };
 
         const CACHE_CONFIG = {
-            ttl: 5 * 60 * 1000, // 缓存5分钟
+            ttl: 5 * 60 * 1000,
             cacheKey: 'hyqy_chat_content'
         };
 
-        // 全局变量
         let allFiles = [];
         let currentPage = 1;
         const PAGE_SIZE = 10;
         let retryCount = 0;
-        const MAX_RETRY = 3; // 最大重试次数
+        const MAX_RETRY = 3;
 
-        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', async () => {
-            // 先检查Token配置
             if (GITHUB_CONFIG.token === 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN') {
                 showConfigError();
                 return;
@@ -384,30 +377,23 @@
             await loadPublishedContent();
         });
 
-        /**
-         * 加载发布的内容（主函数）
-         * 增加重试机制和离线缓存支持
-         */
         async function loadPublishedContent() {
             const contentGrid = document.getElementById('content-grid');
             const loadMoreBtn = document.getElementById('load-more-btn');
             
             try {
-                // 1. 先尝试读取缓存
                 let cachedData = getCachedData();
                 if (cachedData) {
                     allFiles = cachedData;
                     renderContentPage();
                     return;
                 }
-
-                // 2. 检查网络状态
+                
                 if (!navigator.onLine) {
                     showOfflineMode();
                     return;
                 }
 
-                // 3. 请求GitHub API（带超时和重试）
                 const response = await fetchWithRetry(GITHUB_CONFIG.apiUrl, {
                     method: 'GET',
                     headers: {
@@ -420,14 +406,12 @@
                 });
 
                 if (!response.ok) {
-                    // 处理API返回的错误
                     const errorText = await response.text().catch(() => '');
                     throw new Error(`GitHub API 错误: ${response.status} ${response.statusText}\n${errorText}`);
                 }
 
                 const files = await response.json();
                 
-                // 安全排序（处理commit可能为undefined的情况）
                 allFiles = files
                     .filter(file => file.name.endsWith('.json') && file.name.startsWith('data_'))
                     .sort((a, b) => {
@@ -440,10 +424,8 @@
                         else return b.name.localeCompare(a.name);
                     });
 
-                // 缓存数据
                 setCachedData(allFiles);
 
-                // 无内容处理
                 if (allFiles.length === 0) {
                     contentGrid.innerHTML = `
                         <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
@@ -455,13 +437,11 @@
                     return;
                 }
 
-                // 渲染内容
                 renderContentPage();
 
             } catch (error) {
                 console.error('加载内容失败:', error);
                 
-                // 显示错误信息，区分不同错误类型
                 let errorMsg = '加载失败';
                 if (error.message.includes('Failed to fetch')) {
                     errorMsg = '网络请求失败，请检查网络连接或GitHub Token配置';
@@ -484,9 +464,6 @@
             }
         }
 
-        /**
-         * 带重试和超时的Fetch请求
-         */
         async function fetchWithRetry(url, options = {}, retry = 0) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
@@ -499,7 +476,6 @@
                 
                 clearTimeout(timeoutId);
                 
-                // 如果请求失败且未到最大重试次数，递归重试
                 if (!response.ok && retry < MAX_RETRY) {
                     await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1))); // 指数退避
                     return fetchWithRetry(url, options, retry + 1);
@@ -508,8 +484,7 @@
                 return response;
             } catch (error) {
                 clearTimeout(timeoutId);
-                
-                // 超时或网络错误，重试
+
                 if ((error.name === 'AbortError' || error.message.includes('Failed to fetch')) && retry < MAX_RETRY) {
                     await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
                     return fetchWithRetry(url, options, retry + 1);
@@ -519,20 +494,14 @@
             }
         }
 
-        /**
-         * 安全获取文件最后修改时间
-         */
         function getFileLastModifiedDate(file) {
             try {
-                // 方式1：从commit对象获取
                 if (file?.commit?.commit?.author?.date) {
                     return file.commit.commit.author.date;
                 }
-                // 方式2：从文件属性获取
                 else if (file?.last_modified) {
                     return file.last_modified;
                 }
-                // 方式3：从文件名提取时间戳
                 else if (file?.name?.includes('_') && file.name.endsWith('.json')) {
                     const timestamp = file.name.split('_')[1]?.replace('.json', '');
                     if (timestamp && !isNaN(timestamp)) {
@@ -545,9 +514,6 @@
             return null;
         }
 
-        /**
-         * 渲染分页内容
-         */
         async function renderContentPage() {
             const contentGrid = document.getElementById('content-grid');
             const loadMoreBtn = document.getElementById('load-more-btn');
@@ -556,28 +522,23 @@
             const endIndex = startIndex + PAGE_SIZE;
             const pageFiles = allFiles.slice(startIndex, endIndex);
 
-            // 第一页清空加载状态
             if (currentPage === 1) {
                 contentGrid.innerHTML = '';
             }
 
-            // 无更多内容
             if (pageFiles.length === 0) {
                 loadMoreBtn.disabled = true;
                 loadMoreBtn.textContent = '没有更多内容';
                 return;
             }
 
-            // 更新加载更多按钮状态
             loadMoreBtn.disabled = endIndex >= allFiles.length;
             loadMoreBtn.textContent = endIndex >= allFiles.length ? '没有更多内容' : '加载更多';
 
-            // 并行加载文件内容
             const promises = pageFiles.map(file => parseFileContent(file));
             const results = await Promise.all(promises);
             const validResults = results.filter(Boolean);
 
-            // 渲染卡片
             validResults.forEach(({ file, content }, index) => {
                 const fileId = file.name;
                 const likesCount = content.likes || 0;
@@ -619,28 +580,20 @@
 
                 contentGrid.appendChild(card);
             });
-
-            // 绑定事件
             bindEventListeners();
-            
-            // 加载更多按钮
+
             document.getElementById('load-more-btn').onclick = () => {
                 currentPage++;
                 renderContentPage();
             };
         }
 
-        /**
-         * 解析文件内容（带容错）
-         */
         async function parseFileContent(file) {
             try {
                 let content;
-                // 直接使用API返回的base64内容（减少请求）
                 if (file.content) {
                     content = JSON.parse(atob(file.content));
                 } else {
-                    // 备用：下载文件（带缓存）
                     const response = await fetch(file.download_url, {
                         cache: 'force-cache',
                         timeout: 5000
@@ -650,7 +603,6 @@
                 return { file, content };
             } catch (e) {
                 console.error(`解析${file.name}失败:`, e);
-                // 返回默认内容
                 return {
                     file,
                     content: {
@@ -665,9 +617,6 @@
             }
         }
 
-        /**
-         * 格式化日期（带容错）
-         */
         function formatDate(dateString) {
             try {
                 return new Intl.DateTimeFormat('zh-CN', {
@@ -682,11 +631,7 @@
             }
         }
 
-        /**
-         * 绑定事件监听器（防止重复绑定）
-         */
         function bindEventListeners() {
-            // 点赞按钮
             document.querySelectorAll('.like-btn').forEach(btn => {
                 if (btn.dataset.bound) return;
                 btn.dataset.bound = 'true';
@@ -732,7 +677,6 @@
                 });
             });
 
-            // 评论按钮
             document.querySelectorAll('.comment-btn').forEach(btn => {
                 if (btn.dataset.bound) return;
                 btn.dataset.bound = 'true';
@@ -744,7 +688,6 @@
                 });
             });
 
-            // 发布评论
             document.querySelectorAll('.comment-submit').forEach(btn => {
                 if (btn.dataset.bound) return;
                 btn.dataset.bound = 'true';
@@ -800,9 +743,6 @@
             });
         }
 
-        /**
-         * 获取文件内容
-         */
         async function getFileContent(fileName) {
             try {
                 const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
@@ -821,7 +761,6 @@
                 return JSON.parse(content);
             } catch (e) {
                 console.error(`获取文件${fileName}内容失败:`, e);
-                // 返回默认结构
                 return {
                     user: '未知用户',
                     content: '',
@@ -833,9 +772,6 @@
             }
         }
 
-        /**
-         * 更新文件内容
-         */
         async function updateFileContent(fileName, sha, content, commitMessage) {
             try {
                 const fileContent = JSON.stringify(content, null, 2);
@@ -861,8 +797,6 @@
                     const errorData = await response.json().catch(() => ({}));
                     throw new Error(errorData.message || `更新失败: ${response.status}`);
                 }
-                
-                // 失效缓存
                 invalidateCache();
                 return await response.json();
             } catch (e) {
@@ -871,9 +805,6 @@
             }
         }
 
-        /**
-         * 显示提示框
-         */
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -886,9 +817,6 @@
             }, 3000);
         }
 
-        /**
-         * 缓存相关函数
-         */
         function getCachedData() {
             try {
                 const cached = localStorage.getItem(CACHE_CONFIG.cacheKey);
@@ -922,9 +850,6 @@
             localStorage.removeItem(CACHE_CONFIG.cacheKey);
         }
 
-        /**
-         * 辅助函数：显示配置错误
-         */
         function showConfigError() {
             const contentGrid = document.getElementById('content-grid');
             contentGrid.innerHTML = `
@@ -941,12 +866,8 @@
             `;
         }
 
-        /**
-         * 辅助函数：显示离线模式
-         */
         function showOfflineMode() {
             const contentGrid = document.getElementById('content-grid');
-            // 尝试读取缓存
             const cachedData = getCachedData();
             if (cachedData) {
                 allFiles = cachedData;
@@ -965,9 +886,6 @@
             `;
         }
 
-        /**
-         * 辅助函数：重试加载
-         */
         function retryLoadContent() {
             const contentGrid = document.getElementById('content-grid');
             contentGrid.innerHTML = `
