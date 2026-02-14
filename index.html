@@ -295,6 +295,30 @@
             background-color: white;
         }
 
+        /* 新增：离线模式样式 */
+        .offline-mode {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 4rem;
+            color: var(--accent);
+        }
+
+        .offline-mode i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--error);
+        }
+
+        .retry-btn {
+            margin-top: 1rem;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .content-grid {
                 grid-template-columns: 1fr;
@@ -326,75 +350,100 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // 配置项
         const GITHUB_CONFIG = {
             owner: 'HYQY2012',
             repo: 'hyqy2012.github.io',
             path: 'articles',
             apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
-            token: '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'
+            // 重要：替换为你的有效GitHub Personal Access Token
+            // 生成地址：https://github.com/settings/tokens (需要repo权限)
+            token: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN'
         };
 
         const CACHE_CONFIG = {
-            ttl: 5 * 60 * 1000,
+            ttl: 5 * 60 * 1000, // 缓存5分钟
             cacheKey: 'hyqy_chat_content'
         };
 
+        // 全局变量
         let allFiles = [];
         let currentPage = 1;
         const PAGE_SIZE = 10;
+        let retryCount = 0;
+        const MAX_RETRY = 3; // 最大重试次数
 
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', async () => {
+            // 先检查Token配置
+            if (GITHUB_CONFIG.token === 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN') {
+                showConfigError();
+                return;
+            }
+            
             await loadPublishedContent();
         });
 
+        /**
+         * 加载发布的内容（主函数）
+         * 增加重试机制和离线缓存支持
+         */
         async function loadPublishedContent() {
             const contentGrid = document.getElementById('content-grid');
             const loadMoreBtn = document.getElementById('load-more-btn');
             
             try {
+                // 1. 先尝试读取缓存
                 let cachedData = getCachedData();
-                
                 if (cachedData) {
                     allFiles = cachedData;
                     renderContentPage();
                     return;
                 }
 
-                const response = await fetch(GITHUB_CONFIG.apiUrl, {
+                // 2. 检查网络状态
+                if (!navigator.onLine) {
+                    showOfflineMode();
+                    return;
+                }
+
+                // 3. 请求GitHub API（带超时和重试）
+                const response = await fetchWithRetry(GITHUB_CONFIG.apiUrl, {
+                    method: 'GET',
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
                         'Accept': 'application/vnd.github.v3+json',
-                        'Cache-Control': 'max-age=300'
-                    }
+                        'Cache-Control': 'max-age=300',
+                        'User-Agent': 'HYQY Chat/1.0' // 必须添加User-Agent
+                    },
+                    timeout: 10000 // 10秒超时
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    // 处理API返回的错误
+                    const errorText = await response.text().catch(() => '');
+                    throw new Error(`GitHub API 错误: ${response.status} ${response.statusText}\n${errorText}`);
                 }
 
                 const files = await response.json();
                 
-                // 修复：添加安全的排序逻辑，处理undefined的情况
+                // 安全排序（处理commit可能为undefined的情况）
                 allFiles = files
                     .filter(file => file.name.endsWith('.json') && file.name.startsWith('data_'))
                     .sort((a, b) => {
-                        // 获取文件的最后修改时间，增加多层级的安全检查
                         const dateA = getFileLastModifiedDate(a);
                         const dateB = getFileLastModifiedDate(b);
                         
-                        // 如果日期都有效，按时间倒序排列
-                        if (dateA && dateB) {
-                            return new Date(dateB) - new Date(dateA);
-                        }
-                        // 如果只有一个日期有效，有效日期的排前面
+                        if (dateA && dateB) return new Date(dateB) - new Date(dateA);
                         else if (dateA) return -1;
                         else if (dateB) return 1;
-                        // 都没有日期，按文件名排序
                         else return b.name.localeCompare(a.name);
                     });
 
+                // 缓存数据
                 setCachedData(allFiles);
 
+                // 无内容处理
                 if (allFiles.length === 0) {
                     contentGrid.innerHTML = `
                         <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
@@ -406,46 +455,99 @@
                     return;
                 }
 
+                // 渲染内容
                 renderContentPage();
 
             } catch (error) {
+                console.error('加载内容失败:', error);
+                
+                // 显示错误信息，区分不同错误类型
+                let errorMsg = '加载失败';
+                if (error.message.includes('Failed to fetch')) {
+                    errorMsg = '网络请求失败，请检查网络连接或GitHub Token配置';
+                } else if (error.message.includes('401')) {
+                    errorMsg = 'Token无效或权限不足，请检查GitHub Personal Access Token';
+                } else if (error.message.includes('403')) {
+                    errorMsg = 'API请求次数超限，请稍后再试';
+                } else {
+                    errorMsg = error.message;
+                }
+
                 contentGrid.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--error);">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                        <h3>加载失败</h3>
-                        <p style="margin-top: 0.5rem;">${error.message}</p>
-                        <button onclick="loadPublishedContent()" style="margin-top: 1rem; padding: 0.6rem 1.2rem; border: none; border-radius: 6px; background: var(--primary); color: white; cursor: pointer;">重试</button>
+                    <div class="offline-mode">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>${errorMsg}</h3>
+                        <p style="margin-top: 0.5rem;">请检查：1.网络连接 2.GitHub Token有效性 3.GitHub仓库权限</p>
+                        <button class="retry-btn" onclick="retryLoadContent()">重试</button>
                     </div>
                 `;
-                console.error('加载内容失败:', error);
             }
         }
 
-        // 新增：安全获取文件最后修改时间的辅助函数
+        /**
+         * 带重试和超时的Fetch请求
+         */
+        async function fetchWithRetry(url, options = {}, retry = 0) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // 如果请求失败且未到最大重试次数，递归重试
+                if (!response.ok && retry < MAX_RETRY) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1))); // 指数退避
+                    return fetchWithRetry(url, options, retry + 1);
+                }
+                
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                
+                // 超时或网络错误，重试
+                if ((error.name === 'AbortError' || error.message.includes('Failed to fetch')) && retry < MAX_RETRY) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
+                    return fetchWithRetry(url, options, retry + 1);
+                }
+                
+                throw error;
+            }
+        }
+
+        /**
+         * 安全获取文件最后修改时间
+         */
         function getFileLastModifiedDate(file) {
-            // 尝试从不同位置获取日期，增加容错
             try {
                 // 方式1：从commit对象获取
-                if (file.commit && file.commit.commit && file.commit.commit.author && file.commit.commit.author.date) {
+                if (file?.commit?.commit?.author?.date) {
                     return file.commit.commit.author.date;
                 }
-                // 方式2：从文件属性直接获取
-                else if (file.last_modified) {
+                // 方式2：从文件属性获取
+                else if (file?.last_modified) {
                     return file.last_modified;
                 }
-                // 方式3：从文件名中的时间戳提取（适配发布时的命名规则）
-                else if (file.name && file.name.includes('_') && file.name.endsWith('.json')) {
+                // 方式3：从文件名提取时间戳
+                else if (file?.name?.includes('_') && file.name.endsWith('.json')) {
                     const timestamp = file.name.split('_')[1]?.replace('.json', '');
                     if (timestamp && !isNaN(timestamp)) {
                         return new Date(parseInt(timestamp)).toISOString();
                     }
                 }
             } catch (e) {
-                console.warn(`获取文件${file.name}日期失败:`, e);
+                console.warn(`获取文件${file?.name}日期失败:`, e);
             }
             return null;
         }
 
+        /**
+         * 渲染分页内容
+         */
         async function renderContentPage() {
             const contentGrid = document.getElementById('content-grid');
             const loadMoreBtn = document.getElementById('load-more-btn');
@@ -454,34 +556,28 @@
             const endIndex = startIndex + PAGE_SIZE;
             const pageFiles = allFiles.slice(startIndex, endIndex);
 
+            // 第一页清空加载状态
             if (currentPage === 1) {
                 contentGrid.innerHTML = '';
             }
 
+            // 无更多内容
             if (pageFiles.length === 0) {
                 loadMoreBtn.disabled = true;
                 loadMoreBtn.textContent = '没有更多内容';
                 return;
             }
 
+            // 更新加载更多按钮状态
             loadMoreBtn.disabled = endIndex >= allFiles.length;
             loadMoreBtn.textContent = endIndex >= allFiles.length ? '没有更多内容' : '加载更多';
 
-            const promises = pageFiles.map(file => {
-                return new Promise(async (resolve) => {
-                    try {
-                        const content = await parseFileContent(file);
-                        resolve({ file, content });
-                    } catch (error) {
-                        console.error(`解析${file.name}失败:`, error);
-                        resolve(null);
-                    }
-                });
-            });
-
+            // 并行加载文件内容
+            const promises = pageFiles.map(file => parseFileContent(file));
             const results = await Promise.all(promises);
             const validResults = results.filter(Boolean);
 
+            // 渲染卡片
             validResults.forEach(({ file, content }, index) => {
                 const fileId = file.name;
                 const likesCount = content.likes || 0;
@@ -494,9 +590,9 @@
                 card.style.animationDelay = `${index * 50}ms`;
                 card.setAttribute('data-id', fileId);
                 card.innerHTML = `
-                    <span class="card-author">${content.user}</span>
+                    <span class="card-author">${content.user || '未知用户'}</span>
                     <span class="card-time">${formatDate(content.publishTime)}</span>
-                    <div class="card-content">${content.content.replace(/\n/g, '<br>')}</div>
+                    <div class="card-content">${content.content ? content.content.replace(/\n/g, '<br>') : '内容为空'}</div>
                     <div class="card-actions">
                         <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${fileId}" data-sha="${file.sha || ''}">
                             <i class="fas fa-heart"></i>
@@ -524,57 +620,73 @@
                 contentGrid.appendChild(card);
             });
 
+            // 绑定事件
             bindEventListeners();
             
-            // 防止重复绑定事件
-            const loadMoreBtnElement = document.getElementById('load-more-btn');
-            loadMoreBtnElement.onclick = () => {
+            // 加载更多按钮
+            document.getElementById('load-more-btn').onclick = () => {
                 currentPage++;
                 renderContentPage();
             };
         }
 
+        /**
+         * 解析文件内容（带容错）
+         */
         async function parseFileContent(file) {
             try {
+                let content;
+                // 直接使用API返回的base64内容（减少请求）
                 if (file.content) {
-                    const content = atob(file.content);
-                    return JSON.parse(content);
+                    content = JSON.parse(atob(file.content));
                 } else {
+                    // 备用：下载文件（带缓存）
                     const response = await fetch(file.download_url, {
-                        cache: 'force-cache'
+                        cache: 'force-cache',
+                        timeout: 5000
                     });
-                    return await response.json();
+                    content = await response.json();
                 }
+                return { file, content };
             } catch (e) {
-                console.error(`解析文件内容失败:`, e);
-                // 返回默认结构，避免页面崩溃
+                console.error(`解析${file.name}失败:`, e);
+                // 返回默认内容
                 return {
-                    user: '未知用户',
-                    content: '内容加载失败',
-                    publishTime: new Date().toISOString(),
-                    likes: 0,
-                    userLiked: [],
-                    comments: []
+                    file,
+                    content: {
+                        user: '未知用户',
+                        content: '内容加载失败',
+                        publishTime: new Date().toISOString(),
+                        likes: 0,
+                        userLiked: [],
+                        comments: []
+                    }
                 };
             }
         }
 
+        /**
+         * 格式化日期（带容错）
+         */
         function formatDate(dateString) {
             try {
-                const date = new Date(dateString);
                 return new Intl.DateTimeFormat('zh-CN', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
                     hour: '2-digit',
                     minute: '2-digit'
-                }).format(date);
+                }).format(new Date(dateString));
             } catch (e) {
                 return '未知时间';
             }
         }
 
+        /**
+         * 绑定事件监听器（防止重复绑定）
+         */
         function bindEventListeners() {
+            // 点赞按钮
             document.querySelectorAll('.like-btn').forEach(btn => {
                 if (btn.dataset.bound) return;
                 btn.dataset.bound = 'true';
@@ -583,7 +695,6 @@
                     const fileId = this.getAttribute('data-id');
                     const sha = this.getAttribute('data-sha');
                     
-                    // 检查sha是否为空
                     if (!sha) {
                         showToast('缺少文件标识，无法更新点赞', 'error');
                         return;
@@ -621,6 +732,7 @@
                 });
             });
 
+            // 评论按钮
             document.querySelectorAll('.comment-btn').forEach(btn => {
                 if (btn.dataset.bound) return;
                 btn.dataset.bound = 'true';
@@ -632,6 +744,7 @@
                 });
             });
 
+            // 发布评论
             document.querySelectorAll('.comment-submit').forEach(btn => {
                 if (btn.dataset.bound) return;
                 btn.dataset.bound = 'true';
@@ -640,7 +753,6 @@
                     const fileId = this.getAttribute('data-id');
                     const sha = this.getAttribute('data-sha');
                     
-                    // 检查sha是否为空
                     if (!sha) {
                         showToast('缺少文件标识，无法发布评论', 'error');
                         return;
@@ -688,9 +800,12 @@
             });
         }
 
+        /**
+         * 获取文件内容
+         */
         async function getFileContent(fileName) {
             try {
-                const response = await fetch(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
+                const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
                         'Accept': 'application/vnd.github.v3+json'
@@ -718,17 +833,21 @@
             }
         }
 
+        /**
+         * 更新文件内容
+         */
         async function updateFileContent(fileName, sha, content, commitMessage) {
             try {
                 const fileContent = JSON.stringify(content, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
                 
-                const response = await fetch(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
+                const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
                         'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'HYQY Chat/1.0'
                     },
                     body: JSON.stringify({
                         message: commitMessage,
@@ -743,6 +862,7 @@
                     throw new Error(errorData.message || `更新失败: ${response.status}`);
                 }
                 
+                // 失效缓存
                 invalidateCache();
                 return await response.json();
             } catch (e) {
@@ -751,22 +871,24 @@
             }
         }
 
+        /**
+         * 显示提示框
+         */
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast show';
             
-            if (type === 'error') {
-                toast.style.backgroundColor = 'var(--error)';
-            } else {
-                toast.style.backgroundColor = 'var(--primary)';
-            }
+            toast.style.backgroundColor = type === 'error' ? 'var(--error)' : 'var(--primary)';
             
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
         }
 
+        /**
+         * 缓存相关函数
+         */
         function getCachedData() {
             try {
                 const cached = localStorage.getItem(CACHE_CONFIG.cacheKey);
@@ -798,6 +920,68 @@
 
         function invalidateCache() {
             localStorage.removeItem(CACHE_CONFIG.cacheKey);
+        }
+
+        /**
+         * 辅助函数：显示配置错误
+         */
+        function showConfigError() {
+            const contentGrid = document.getElementById('content-grid');
+            contentGrid.innerHTML = `
+                <div class="offline-mode">
+                    <i class="fas fa-cog"></i>
+                    <h3>配置错误</h3>
+                    <p style="margin-top: 0.5rem;">请先配置有效的GitHub Personal Access Token</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--secondary);">
+                        1. 访问 https://github.com/settings/tokens <br>
+                        2. 生成带repo权限的Token <br>
+                        3. 替换代码中的 YOUR_GITHUB_PERSONAL_ACCESS_TOKEN
+                    </p>
+                </div>
+            `;
+        }
+
+        /**
+         * 辅助函数：显示离线模式
+         */
+        function showOfflineMode() {
+            const contentGrid = document.getElementById('content-grid');
+            // 尝试读取缓存
+            const cachedData = getCachedData();
+            if (cachedData) {
+                allFiles = cachedData;
+                renderContentPage();
+                showToast('当前处于离线模式，显示缓存内容', 'success');
+                return;
+            }
+            
+            contentGrid.innerHTML = `
+                <div class="offline-mode">
+                    <i class="fas fa-wifi-slash"></i>
+                    <h3>无网络连接</h3>
+                    <p style="margin-top: 0.5rem;">请检查网络连接后重试</p>
+                    <button class="retry-btn" onclick="retryLoadContent()">重试</button>
+                </div>
+            `;
+        }
+
+        /**
+         * 辅助函数：重试加载
+         */
+        function retryLoadContent() {
+            const contentGrid = document.getElementById('content-grid');
+            contentGrid.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    重试中...
+                </div>
+            `;
+            retryCount++;
+            if (retryCount > MAX_RETRY) {
+                retryCount = 0;
+                showToast('重试次数已达上限', 'error');
+            }
+            loadPublishedContent();
         }
     </script>
 </body>
