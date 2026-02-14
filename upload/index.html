@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>内容发布中心</title>
+    <title>发布内容 - HYQY Chat</title>
     <style>
         :root {
             --primary: #1a1a1a;
@@ -221,7 +221,7 @@
 </head>
 <body>
     <div class="upload-container">
-        <h1>内容发布中心</h1>
+        <h1>发布聊天内容</h1>
         
         <div class="form-group">
             <label for="username">发布用户</label>
@@ -229,8 +229,8 @@
         </div>
 
         <div class="form-group">
-            <label for="content">发布内容</label>
-            <textarea id="content" placeholder="请输入发布内容描述"></textarea>
+            <label for="content">聊天内容</label>
+            <textarea id="content" placeholder="请输入聊天内容"></textarea>
         </div>
 
         <div class="button-group">
@@ -255,12 +255,12 @@
             owner: 'HYQY2012',
             repo: 'hyqy2012.github.io',
             path: 'articles',
-            apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents',
-            token: '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'
+            apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
+            token: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN'
         };
 
         returnBtn.addEventListener('click', () => {
-            window.location.href = 'https://www.何逸钦远.space';
+            window.location.href = '/';
         });
 
         publishBtn.addEventListener('click', async () => {
@@ -270,7 +270,7 @@
             }
 
             if (!contentInput.value.trim()) {
-                showMessage('请输入发布内容', 'error');
+                showMessage('请输入聊天内容', 'error');
                 return;
             }
 
@@ -289,14 +289,17 @@
                 const content = JSON.stringify({
                     user: usernameInput.value,
                     content: contentInput.value,
-                    publishTime: new Date().toISOString()
-                });
+                    publishTime: new Date().toISOString(),
+                    likes: 0,
+                    userLiked: [],
+                    comments: []
+                }, null, 2);
 
                 const fileContent = btoa(unescape(encodeURIComponent(content)));
                 const filePath = `${GITHUB_CONFIG.path}/${fileName}`;
-                const commitMessage = `发布内容 by ${usernameInput.value}`;
+                const commitMessage = `发布聊天内容 by ${usernameInput.value}`;
 
-                const response = await fetch(`${GITHUB_CONFIG.apiUrl}/${filePath}`, {
+                const response = await fetch(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
