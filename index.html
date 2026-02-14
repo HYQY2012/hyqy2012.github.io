@@ -102,6 +102,16 @@
             border: 1px solid rgba(0, 0, 0, 0.08);
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
             transition: var(--transition);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.3s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .content-card:hover {
@@ -257,6 +267,34 @@
             transform: translateY(0);
         }
 
+        .load-more {
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .load-more-btn {
+            background-color: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            color: var(--primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .load-more-btn:hover {
+            background-color: var(--light);
+            transform: translateY(-2px);
+        }
+
+        .load-more-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background-color: white;
+        }
+
         @media (max-width: 768px) {
             .content-grid {
                 grid-template-columns: 1fr;
@@ -280,6 +318,9 @@
                 加载中...
             </div>
         </div>
+        <div class="load-more">
+            <button class="load-more-btn" id="load-more-btn" disabled>加载更多</button>
+        </div>
     </section>
 
     <div class="toast" id="toast"></div>
@@ -290,8 +331,17 @@
             repo: 'hyqy2012.github.io',
             path: 'articles',
             apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
-            token: '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'
+            token: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN'
         };
+
+        const CACHE_CONFIG = {
+            ttl: 5 * 60 * 1000,
+            cacheKey: 'hyqy_chat_content'
+        };
+
+        let allFiles = [];
+        let currentPage = 1;
+        const PAGE_SIZE = 10;
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadPublishedContent();
@@ -299,12 +349,22 @@
 
         async function loadPublishedContent() {
             const contentGrid = document.getElementById('content-grid');
+            const loadMoreBtn = document.getElementById('load-more-btn');
             
             try {
+                let cachedData = getCachedData();
+                
+                if (cachedData) {
+                    allFiles = cachedData;
+                    renderContentPage();
+                    return;
+                }
+
                 const response = await fetch(GITHUB_CONFIG.apiUrl, {
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Cache-Control': 'max-age=300'
                     }
                 });
 
@@ -314,11 +374,13 @@
 
                 const files = await response.json();
                 
-                const jsonFiles = files
+                allFiles = files
                     .filter(file => file.name.endsWith('.json') && file.name.startsWith('data_'))
                     .sort((a, b) => new Date(b.commit.commit.author.date) - new Date(a.commit.commit.author.date));
 
-                if (jsonFiles.length === 0) {
+                setCachedData(allFiles);
+
+                if (allFiles.length === 0) {
                     contentGrid.innerHTML = `
                         <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
                             <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem;"></i>
@@ -329,222 +391,7 @@
                     return;
                 }
 
-                const contentPromises = jsonFiles.map(file => fetchFileContent(file));
-                const contents = await Promise.all(contentPromises);
-
-                contentGrid.innerHTML = contents.map((content, index) => {
-                    const file = jsonFiles[index];
-                    const fileId = file.name;
-                    const likesCount = content.likes || 0;
-                    const userLiked = content.userLiked || [];
-                    const comments = content.comments || [];
-                    const isLiked = userLiked.includes('current_user');
-
-                    return `
-                        <div class="content-c            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-            letter-spacing: -0.02em;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-link {
-            color: var(--secondary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-
-        .nav-link:hover {
-            color: var(--primary);
-        }
-
-        .publish-btn-nav {
-            background-color: var(--primary);
-            color: white;
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-
-        .publish-btn-nav:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .content-section {
-            padding: 5rem 5%;
-        }
-
-        .section-title {
-            font-size: 2rem;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 4rem;
-            position: relative;
-        }
-
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 3px;
-            background-color: var(--primary);
-            margin: 1rem auto 0;
-            border-radius: 3px;
-        }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .content-card {
-            background-color: white;
-            border-radius: 16px;
-            padding: 2rem;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
-            transition: var(--transition);
-        }
-
-        .content-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        .card-author {
-            font-weight: 600;
-            margin-bottom: 0.8rem;
-            color: var(--primary);
-        }
-
-        .card-time {
-            font-size: 0.9rem;
-            color: var(--accent);
-            margin-bottom: 1.5rem;
-            display: block;
-        }
-
-        .card-content {
-            color: var(--secondary);
-            line-height: 1.7;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 4rem;
-            color: var(--accent);
-            font-size: 1.1rem;
-        }
-
-        @media (max-width: 768px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .nav-links {
-                display: none;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-    <nav class="navbar">
-        <a href="#" class="logo">HYQY</a>
-        <div class="nav-links">
-            <a href="#" class="nav-link">首页</a>
-            <a href="#content" class="nav-link">内容列表</a>
-            <a href="#" class="nav-link">关于</a>
-        </div>
-        <a href="./upload/" class="publish-btn-nav">发布内容</a>
-    </nav>
-
-    <section id="content" class="content-section">
-        <h2 class="section-title">已发布内容</h2>
-        <div class="content-grid" id="content-grid">
-            <div class="loading">
-                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                加载中...
-            </div>
-        </div>
-    </section>
-
-    <script>
-        const GITHUB_CONFIG = {
-            owner: 'HYQY2012',
-            repo: 'hyqy2012.github.io',
-            path: 'articles',
-            apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
-            token: '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'
-        };
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadPublishedContent();
-        });
-
-        async function loadPublishedContent() {
-            const contentGrid = document.getElementById('content-grid');
-            
-            try {
-                const response = await fetch(GITHUB_CONFIG.apiUrl, {
-                    headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const files = await response.json();
-                
-                const jsonFiles = files
-                    .filter(file => file.name.endsWith('.json') && file.name.startsWith('data_'))
-                    .sort((a, b) => new Date(b.commit.commit.author.date) - new Date(a.commit.commit.author.date));
-
-                if (jsonFiles.length === 0) {
-                    contentGrid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
-                            <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                            <h3>暂无已发布内容</h3>
-                            <p style="margin-top: 0.5rem;">点击"发布内容"按钮创建你的第一条内容</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const contentPromises = jsonFiles.map(file => fetchFileContent(file));
-                const contents = await Promise.all(contentPromises);
-
-                contentGrid.innerHTML = contents.map(content => `
-                    <div class="content-card">
-                        <span class="card-author">${content.user}</span>
-                        <span class="card-time">${formatDate(content.publishTime)}</span>
-                        <div class="card-content">${content.content.replace(/\n/g, '<br>')}</div>
-                    </div>
-                `).join('');
+                renderContentPage();
 
             } catch (error) {
                 contentGrid.innerHTML = `
@@ -552,16 +399,109 @@
                         <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
                         <h3>加载失败</h3>
                         <p style="margin-top: 0.5rem;">${error.message}</p>
+                        <button onclick="loadPublishedContent()" style="margin-top: 1rem; padding: 0.6rem 1.2rem; border: none; border-radius: 6px; background: var(--primary); color: white; cursor: pointer;">重试</button>
                     </div>
                 `;
                 console.error('加载内容失败:', error);
             }
         }
 
-        async function fetchFileContent(file) {
-            const response = await fetch(file.download_url);
-            const content = await response.json();
-            return content;
+        async function renderContentPage() {
+            const contentGrid = document.getElementById('content-grid');
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            
+            const startIndex = (currentPage - 1) * PAGE_SIZE;
+            const endIndex = startIndex + PAGE_SIZE;
+            const pageFiles = allFiles.slice(startIndex, endIndex);
+
+            if (currentPage === 1) {
+                contentGrid.innerHTML = '';
+            }
+
+            if (pageFiles.length === 0) {
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.textContent = '没有更多内容';
+                return;
+            }
+
+            loadMoreBtn.disabled = endIndex >= allFiles.length;
+            loadMoreBtn.textContent = endIndex >= allFiles.length ? '没有更多内容' : '加载更多';
+
+            const promises = pageFiles.map(file => {
+                return new Promise(async (resolve) => {
+                    try {
+                        const content = await parseFileContent(file);
+                        resolve({ file, content });
+                    } catch (error) {
+                        console.error(`解析${file.name}失败:`, error);
+                        resolve(null);
+                    }
+                });
+            });
+
+            const results = await Promise.all(promises);
+            const validResults = results.filter(Boolean);
+
+            validResults.forEach(({ file, content }, index) => {
+                const fileId = file.name;
+                const likesCount = content.likes || 0;
+                const userLiked = content.userLiked || [];
+                const comments = content.comments || [];
+                const isLiked = userLiked.includes('current_user');
+
+                const card = document.createElement('div');
+                card.className = 'content-card';
+                card.style.animationDelay = `${index * 50}ms`;
+                card.setAttribute('data-id', fileId);
+                card.innerHTML = `
+                    <span class="card-author">${content.user}</span>
+                    <span class="card-time">${formatDate(content.publishTime)}</span>
+                    <div class="card-content">${content.content.replace(/\n/g, '<br>')}</div>
+                    <div class="card-actions">
+                        <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${fileId}" data-sha="${file.sha}">
+                            <i class="fas fa-heart"></i>
+                            <span>${likesCount}</span>
+                        </button>
+                        <button class="comment-btn" data-id="${fileId}" data-sha="${file.sha}">
+                            <i class="fas fa-comment"></i>
+                            <span>${comments.length}</span>
+                        </button>
+                    </div>
+                    <div class="comments-section" id="comments-${fileId}">
+                        <textarea class="comment-input" placeholder="输入你的评论..."></textarea>
+                        <button class="comment-submit" data-id="${fileId}" data-sha="${file.sha}">发布评论</button>
+                        <div class="comments-list" id="comments-list-${fileId}">
+                            ${comments.map(comment => `
+                                <div class="comment-item">
+                                    <div class="comment-author">${comment.author || '访客'}</div>
+                                    <div class="comment-text">${comment.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                contentGrid.appendChild(card);
+            });
+
+            bindEventListeners();
+            
+            document.getElementById('load-more-btn').addEventListener('click', () => {
+                currentPage++;
+                renderContentPage();
+            });
+        }
+
+        async function parseFileContent(file) {
+            if (file.content) {
+                const content = atob(file.content);
+                return JSON.parse(content);
+            } else {
+                const response = await fetch(file.download_url, {
+                    cache: 'force-cache'
+                });
+                return await response.json();
+            }
         }
 
         function formatDate(dateString) {
@@ -573,6 +513,199 @@
                 hour: '2-digit',
                 minute: '2-digit'
             }).format(date);
+        }
+
+        function bindEventListeners() {
+            document.querySelectorAll('.like-btn').forEach(btn => {
+                if (btn.dataset.bound) return;
+                btn.dataset.bound = 'true';
+                
+                btn.addEventListener('click', async function() {
+                    const fileId = this.getAttribute('data-id');
+                    const sha = this.getAttribute('data-sha');
+                    const countElement = this.querySelector('span');
+                    let count = parseInt(countElement.textContent);
+                    
+                    try {
+                        const fileContent = await getFileContent(fileId);
+                        let userLiked = fileContent.userLiked || [];
+                        
+                        if (userLiked.includes('current_user')) {
+                            userLiked = userLiked.filter(id => id !== 'current_user');
+                            this.classList.remove('liked');
+                            count--;
+                        } else {
+                            userLiked.push('current_user');
+                            this.classList.add('liked');
+                            count++;
+                        }
+                        
+                        fileContent.likes = count;
+                        fileContent.userLiked = userLiked;
+                        
+                        await updateFileContent(fileId, sha, fileContent, '更新点赞数');
+                        
+                        countElement.textContent = count;
+                        showToast('点赞状态已更新');
+                        
+                    } catch (error) {
+                        showToast('更新点赞失败: ' + error.message, 'error');
+                        console.error('点赞更新失败:', error);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.comment-btn').forEach(btn => {
+                if (btn.dataset.bound) return;
+                btn.dataset.bound = 'true';
+                
+                btn.addEventListener('click', function() {
+                    const fileId = this.getAttribute('data-id');
+                    const commentsSection = document.getElementById(`comments-${fileId}`);
+                    commentsSection.classList.toggle('active');
+                });
+            });
+
+            document.querySelectorAll('.comment-submit').forEach(btn => {
+                if (btn.dataset.bound) return;
+                btn.dataset.bound = 'true';
+                
+                btn.addEventListener('click', async function() {
+                    const fileId = this.getAttribute('data-id');
+                    const sha = this.getAttribute('data-sha');
+                    const input = this.parentElement.querySelector('.comment-input');
+                    const commentText = input.value.trim();
+
+                    if (!commentText) return;
+
+                    try {
+                        const fileContent = await getFileContent(fileId);
+                        fileContent.comments = fileContent.comments || [];
+                        
+                        const newComment = {
+                            author: '访客',
+                            text: commentText,
+                            time: new Date().toISOString()
+                        };
+
+                        fileContent.comments.push(newComment);
+                        await updateFileContent(fileId, sha, fileContent, '添加新评论');
+                        
+                        const commentsList = document.getElementById(`comments-list-${fileId}`);
+                        const commentElement = document.createElement('div');
+                        commentElement.className = 'comment-item';
+                        commentElement.innerHTML = `
+                            <div class="comment-author">${newComment.author}</div>
+                            <div class="comment-text">${newComment.text}</div>
+                        `;
+
+                        commentsList.appendChild(commentElement);
+                        input.value = '';
+
+                        const commentCountBtn = document.querySelector(`.comment-btn[data-id="${fileId}"] span`);
+                        commentCountBtn.textContent = fileContent.comments.length;
+                        
+                        showToast('评论发布成功');
+                        
+                    } catch (error) {
+                        showToast('发布评论失败: ' + error.message, 'error');
+                        console.error('评论发布失败:', error);
+                    }
+                });
+            });
+        }
+
+        async function getFileContent(fileName) {
+            const response = await fetch(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`无法获取文件: ${response.status}`);
+            }
+            
+            const fileData = await response.json();
+            const content = atob(fileData.content);
+            return JSON.parse(content);
+        }
+
+        async function updateFileContent(fileName, sha, content, commitMessage) {
+            const fileContent = JSON.stringify(content, null, 2);
+            const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
+            
+            const response = await fetch(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: base64Content,
+                    sha: sha,
+                    branch: 'main'
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `更新失败: ${response.status}`);
+            }
+            
+            invalidateCache();
+            return await response.json();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show';
+            
+            if (type === 'error') {
+                toast.style.backgroundColor = 'var(--error)';
+            } else {
+                toast.style.backgroundColor = 'var(--primary)';
+            }
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function getCachedData() {
+            try {
+                const cached = localStorage.getItem(CACHE_CONFIG.cacheKey);
+                if (!cached) return null;
+                
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp > CACHE_CONFIG.ttl) {
+                    localStorage.removeItem(CACHE_CONFIG.cacheKey);
+                    return null;
+                }
+                
+                return data;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function setCachedData(data) {
+            try {
+                localStorage.setItem(CACHE_CONFIG.cacheKey, JSON.stringify({
+                    data,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.error('缓存失败:', e);
+            }
+        }
+
+        function invalidateCache() {
+            localStorage.removeItem(CACHE_CONFIG.cacheKey);
         }
     </script>
 </body>
