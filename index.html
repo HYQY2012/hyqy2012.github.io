@@ -1,7 +1,7 @@
-<!-- 已修复！ -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- 已修复：更新GitHub Token为有效值，修正JSON文件访问路径 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HYQY Chat</title>
@@ -370,7 +370,7 @@
         const MAX_RETRY = 3;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            if (GITHUB_CONFIG.token === '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') {
+            if (GITHUB_CONFIG.token === 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN') {
                 showConfigError();
                 return;
             }
