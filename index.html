@@ -1,10 +1,9 @@
-<!-- 小何已全面修复! -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Type" content="application/json; charset=utf-8">
+    <link rel="icon" type="image/svg" href="https://www.xn--vqq068m4ham0n.space/img/logo.svg">
     <title>HYQY Chat</title>
     <style>
         :root {
@@ -140,109 +139,6 @@
             margin-bottom: 1.5rem;
         }
 
-        .card-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .like-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: none;
-            border: none;
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-        }
-
-        .like-btn:hover {
-            color: var(--error);
-        }
-
-        .like-btn.liked {
-            color: var(--error);
-        }
-
-        .comment-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: none;
-            border: none;
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: var(--transition);
-        }
-
-        .comment-btn:hover {
-            color: var(--primary);
-        }
-
-        .comments-section {
-            margin-top: 1.5rem;
-            max-height: 0;
-            overflow: hidden;
-            transition: var(--transition);
-        }
-
-        .comments-section.active {
-            max-height: 500px;
-        }
-
-        .comment-input {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            resize: none;
-            min-height: 80px;
-            font-size: 0.95rem;
-        }
-
-        .comment-submit {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: var(--transition);
-        }
-
-        .comment-submit:hover {
-            opacity: 0.9;
-        }
-
-        .comments-list {
-            margin-top: 1rem;
-        }
-
-        .comment-item {
-            padding: 1rem;
-            background-color: var(--light);
-            border-radius: 8px;
-            margin-bottom: 0.8rem;
-        }
-
-        .comment-author {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 0.3rem;
-        }
-
-        .comment-text {
-            font-size: 0.95rem;
-            color: var(--secondary);
-        }
-
         .loading {
             text-align: center;
             padding: 4rem;
@@ -250,80 +146,11 @@
             font-size: 1.1rem;
         }
 
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            opacity: 0;
-            transition: var(--transition);
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .load-more {
-            text-align: center;
-            margin-top: 3rem;
-        }
-
-        .load-more-btn {
-            background-color: white;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 0.8rem 2rem;
-            border-radius: 8px;
-            color: var(--primary);
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .load-more-btn:hover {
-            background-color: var(--light);
-            transform: translateY(-2px);
-        }
-
-        .load-more-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            background-color: white;
-        }
-
-        .offline-mode {
+        .empty {
             grid-column: 1/-1;
             text-align: center;
             padding: 4rem;
             color: var(--accent);
-        }
-
-        .offline-mode i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--error);
-        }
-
-        .retry-btn {
-            margin-top: 1rem;
-            padding: 0.6rem 1.2rem;
-            border: none;
-            border-radius: 6px;
-            background: var(--primary);
-            color: white;
-            cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
@@ -340,501 +167,96 @@
         <div class="content-grid" id="content-grid">
             <div class="loading">
                 <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                加载中...
+                正在检查data_0001到data_9999.json文件...
             </div>
-        </div>
-        <div class="load-more">
-            <button class="load-more-btn" id="load-more-btn" disabled>加载更多</button>
         </div>
     </section>
 
-    <div class="toast" id="toast"></div>
-
     <script>
-        const CONFIG = {
-            baseUrl: 'https://www.xn--vqq068m4ham0n.space/articles',
-            token: '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',
-            githubRepoApi: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles'
-        };
-
-        const CACHE_CONFIG = {
-            ttl: 5 * 60 * 1000,
-            cacheKey: 'hyqy_chat_data_json'
-        };
-
-        let allJsonFiles = [];
-        let currentPage = 1;
-        const PAGE_SIZE = 10;
-        let retryCount = 0;
-        const MAX_RETRY = 3;
+        const BASE_URL = 'https://www.xn--vqq068m4ham0n.space/articles';
+        const START_NUM = 1;
+        const END_NUM = 9999;
+        let validFiles = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadAllJsonFiles();
+            await checkAllJsonFiles();
         });
 
-        async function loadAllJsonFiles() {
+        async function checkAllJsonFiles() {
             const contentGrid = document.getElementById('content-grid');
-            const loadMoreBtn = document.getElementById('load-more-btn');
             
-            try {
-                let cachedData = getCachedData();
-                if (cachedData) {
-                    allJsonFiles = cachedData;
-                    renderContentPage();
-                    return;
-                }
+            contentGrid.innerHTML = '';
 
-                if (!navigator.onLine) {
-                    showOfflineMode();
-                    return;
-                }
+            for (let num = START_NUM; num <= END_NUM; num++) {
+                const numStr = num.toString().padStart(4, '0');
+                const jsonUrl = `${BASE_URL}/data_${numStr}.json`;
 
-                const response = await fetchWithRetry(CONFIG.githubRepoApi, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `token ${CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'User-Agent': 'HYQY Chat/1.0'
-                    },
-                    timeout: 15000
-                });
-
-                if (!response.ok) {
-                    throw new Error(`获取文件列表失败: ${response.status} ${response.statusText}`);
-                }
-
-                const allFiles = await response.json();
-                
-                allJsonFiles = allFiles.filter(file => {
-                    return /^data_\d+\.json$/.test(file.name) && file.type === 'file';
-                });
-
-                setCachedData(allJsonFiles);
-
-                if (allJsonFiles.length === 0) {
-                    contentGrid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
-                            <i class="fas fa-file-code" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                            <h3>暂无data_xxxx.json格式的内容</h3>
-                            <p style="margin-top: 0.5rem;">请检查articles文件夹下是否有符合命名规则的JSON文件</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                renderContentPage();
-
-            } catch (error) {
-                console.error('加载JSON文件列表失败:', error);
-                
-                let errorMsg = '加载失败';
-                if (error.message.includes('401')) {
-                    errorMsg = 'GitHub Token无效/权限不足';
-                } else if (error.message.includes('Failed to fetch')) {
-                    errorMsg = '网络请求失败，请检查域名解析或网络';
-                } else if (error.message.includes('Unexpected token')) {
-                    errorMsg = 'JSON文件格式错误，无法解析';
-                } else {
-                    errorMsg = error.message;
-                }
-
-                contentGrid.innerHTML = `
-                    <div class="offline-mode">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>${errorMsg}</h3>
-                        <p style="margin-top: 0.5rem;">当前路径：${CONFIG.baseUrl}/data_xxxx.json</p>
-                        <button class="retry-btn" onclick="retryLoadContent()">重试</button>
-                    </div>
-                `;
-            }
-        }
-
-        async function renderContentPage() {
-            const contentGrid = document.getElementById('content-grid');
-            const loadMoreBtn = document.getElementById('load-more-btn');
-            
-            const startIndex = (currentPage - 1) * PAGE_SIZE;
-            const endIndex = startIndex + PAGE_SIZE;
-            const pageFiles = allJsonFiles.slice(startIndex, endIndex);
-
-            if (currentPage === 1) {
-                contentGrid.innerHTML = '';
-            }
-
-            if (pageFiles.length === 0) {
-                loadMoreBtn.disabled = true;
-                loadMoreBtn.textContent = '没有更多内容';
-                return;
-            }
-
-            loadMoreBtn.disabled = endIndex >= allJsonFiles.length;
-            loadMoreBtn.textContent = endIndex >= allJsonFiles.length ? '没有更多内容' : '加载更多';
-
-            const promises = pageFiles.map(file => loadSingleJsonFile(file));
-            const results = await Promise.all(promises);
-            const validResults = results.filter(Boolean);
-
-            validResults.forEach(({ file, content }, index) => {
-                const fileId = file.name.replace('.json', '');
-                const likesCount = content.likes || 0;
-                const userLiked = content.userLiked || [];
-                const comments = content.comments || [];
-                const isLiked = userLiked.includes('current_user');
-
-                const card = document.createElement('div');
-                card.className = 'content-card';
-                card.style.animationDelay = `${index * 50}ms`;
-                card.setAttribute('data-id', fileId);
-                card.innerHTML = `
-                    <span class="card-author">${content.user || '未知用户'}</span>
-                    <span class="card-time">${formatDate(content.publishTime)}</span>
-                    <div class="card-content">${content.content ? content.content.replace(/\n/g, '<br>') : '内容为空'}</div>
-                    <div class="card-actions">
-                        <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${fileId}" data-sha="${file.sha || ''}">
-                            <i class="fas fa-heart"></i>
-                            <span>${likesCount}</span>
-                        </button>
-                        <button class="comment-btn" data-id="${fileId}" data-sha="${file.sha || ''}">
-                            <i class="fas fa-comment"></i>
-                            <span>${comments.length}</span>
-                        </button>
-                    </div>
-                    <div class="comments-section" id="comments-${fileId}">
-                        <textarea class="comment-input" placeholder="输入你的评论..."></textarea>
-                        <button class="comment-submit" data-id="${fileId}" data-sha="${file.sha || ''}">发布评论</button>
-                        <div class="comments-list" id="comments-list-${fileId}">
-                            ${comments.map(comment => `
-                                <div class="comment-item">
-                                    <div class="comment-author">${comment.author || '访客'}</div>
-                                    <div class="comment-text">${comment.text}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-
-                contentGrid.appendChild(card);
-            });
-
-            bindEventListeners();
-            
-            document.getElementById('load-more-btn').onclick = () => {
-                currentPage++;
-                renderContentPage();
-            };
-        }
-
-        async function loadSingleJsonFile(file) {
-            try {
-                const response = await fetchWithRetry(`${CONFIG.baseUrl}/${file.name}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    timeout: 10000
-                });
-
-                if (!response.ok) {
-                    throw new Error(`文件加载失败: ${file.name}`);
-                }
-
-                const content = await response.json();
-                return { file, content };
-            } catch (e) {
-                console.error(`加载${file.name}失败:`, e);
-                return {
-                    file,
-                    content: {
-                        user: '未知用户',
-                        content: `文件${file.name}解析失败`,
-                        publishTime: new Date().toISOString(),
-                        likes: 0,
-                        userLiked: [],
-                        comments: []
-                    }
-                };
-            }
-        }
-
-        function formatDate(dateString) {
-            try {
-                return new Intl.DateTimeFormat('zh-CN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }).format(new Date(dateString));
-            } catch (e) {
-                return '未知时间';
-            }
-        }
-
-        function bindEventListeners() {
-            document.querySelectorAll('.like-btn').forEach(btn => {
-                if (btn.dataset.bound) return;
-                btn.dataset.bound = 'true';
-                
-                btn.addEventListener('click', async function() {
-                    const fileId = this.getAttribute('data-id');
-                    const sha = this.getAttribute('data-sha');
-                    const jsonFileName = `${fileId}.json`;
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
                     
-                    if (!sha) {
-                        showToast('缺少文件标识，无法更新点赞', 'error');
-                        return;
-                    }
-                    
-                    const countElement = this.querySelector('span');
-                    let count = parseInt(countElement.textContent);
-                    
-                    try {
-                        const response = await fetchWithRetry(`${CONFIG.baseUrl}/${jsonFileName}`, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        });
-                        const fileContent = await response.json();
-                        
-                        let userLiked = fileContent.userLiked || [];
-                        if (userLiked.includes('current_user')) {
-                            userLiked = userLiked.filter(id => id !== 'current_user');
-                            this.classList.remove('liked');
-                            count--;
-                        } else {
-                            userLiked.push('current_user');
-                            this.classList.add('liked');
-                            count++;
+                    const response = await fetch(jsonUrl, {
+                        method: 'GET',
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/json'
                         }
-                        
-                        fileContent.likes = count;
-                        fileContent.userLiked = userLiked;
-                        
-                        await updateGithubFile(jsonFileName, sha, fileContent, '更新点赞数');
-                        
-                        countElement.textContent = count;
-                        showToast('点赞状态已更新');
-                        
-                    } catch (error) {
-                        showToast('更新点赞失败: ' + error.message, 'error');
-                        console.error('点赞更新失败:', error);
-                    }
-                });
-            });
+                    });
+                    clearTimeout(timeoutId);
 
-            document.querySelectorAll('.comment-btn').forEach(btn => {
-                if (btn.dataset.bound) return;
-                btn.dataset.bound = 'true';
-                
-                btn.addEventListener('click', function() {
-                    const fileId = this.getAttribute('data-id');
-                    const commentsSection = document.getElementById(`comments-${fileId}`);
-                    commentsSection.classList.toggle('active');
-                });
-            });
-
-            document.querySelectorAll('.comment-submit').forEach(btn => {
-                if (btn.dataset.bound) return;
-                btn.dataset.bound = 'true';
-                
-                btn.addEventListener('click', async function() {
-                    const fileId = this.getAttribute('data-id');
-                    const sha = this.getAttribute('data-sha');
-                    const jsonFileName = `${fileId}.json`;
-                    
-                    if (!sha) {
-                        showToast('缺少文件标识，无法发布评论', 'error');
-                        return;
-                    }
-                    
-                    const input = this.parentElement.querySelector('.comment-input');
-                    const commentText = input.value.trim();
-
-                    if (!commentText) return;
-
-                    try {
-                        const response = await fetchWithRetry(`${CONFIG.baseUrl}/${jsonFileName}`, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
+                    if (response.ok) {
+                        const content = await response.json();
+                        validFiles.push({
+                            fileName: `data_${numStr}.json`,
+                            content: content
                         });
-                        const fileContent = await response.json();
-                        
-                        fileContent.comments = fileContent.comments || [];
-                        const newComment = {
-                            author: '访客',
-                            text: commentText,
-                            time: new Date().toISOString()
-                        };
-                        fileContent.comments.push(newComment);
-                        
-                        await updateGithubFile(jsonFileName, sha, fileContent, '添加新评论');
-                        
-                        const commentsList = document.getElementById(`comments-list-${fileId}`);
-                        const commentElement = document.createElement('div');
-                        commentElement.className = 'comment-item';
-                        commentElement.innerHTML = `
-                            <div class="comment-author">${newComment.author}</div>
-                            <div class="comment-text">${newComment.text}</div>
-                        `;
-                        commentsList.appendChild(commentElement);
-                        input.value = '';
-
-                        const commentCountBtn = document.querySelector(`.comment-btn[data-id="${fileId}"] span`);
-                        commentCountBtn.textContent = fileContent.comments.length;
-                        
-                        showToast('评论发布成功');
-                        
-                    } catch (error) {
-                        showToast('发布评论失败: ' + error.message, 'error');
-                        console.error('评论发布失败:', error);
+                        renderFileCard(`data_${numStr}.json`, content);
                     }
-                });
-            });
-        }
-
-        async function updateGithubFile(fileName, sha, content, commitMessage) {
-            try {
-                const fileContent = JSON.stringify(content, null, 2);
-                const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
-                
-                const response = await fetchWithRetry(`https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles/${fileName}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json',
-                        'User-Agent': 'HYQY Chat/1.0'
-                    },
-                    body: JSON.stringify({
-                        message: commitMessage,
-                        content: base64Content,
-                        sha: sha,
-                        branch: 'main'
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || `更新失败: ${response.status}`);
+                } catch (e) {
+                    continue;
                 }
-                
-                invalidateCache();
-                return await response.json();
-            } catch (e) {
-                console.error(`更新文件${fileName}失败:`, e);
-                throw e;
+            }
+
+            if (validFiles.length === 0) {
+                contentGrid.innerHTML = `
+                    <div class="empty">
+                        <i class="fas fa-file-code" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h3>未找到任何data_0001到data_9999.json文件</h3>
+                        <p style="margin-top: 0.5rem;">当前检查路径：${BASE_URL}/data_xxxx.json</p>
+                    </div>
+                `;
             }
         }
 
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = 'toast show';
-            
-            toast.style.backgroundColor = type === 'error' ? 'var(--error)' : 'var(--primary)';
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        function getCachedData() {
-            try {
-                const cached = localStorage.getItem(CACHE_CONFIG.cacheKey);
-                if (!cached) return null;
-                
-                const { data, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp > CACHE_CONFIG.ttl) {
-                    localStorage.removeItem(CACHE_CONFIG.cacheKey);
-                    return null;
-                }
-                
-                return data;
-            } catch (e) {
-                console.error('读取缓存失败:', e);
-                return null;
-            }
-        }
-
-        function setCachedData(data) {
-            try {
-                localStorage.setItem(CACHE_CONFIG.cacheKey, JSON.stringify({
-                    data,
-                    timestamp: Date.now()
-                }));
-            } catch (e) {
-                console.error('缓存失败:', e);
-            }
-        }
-
-        function invalidateCache() {
-            localStorage.removeItem(CACHE_CONFIG.cacheKey);
-        }
-
-        function showOfflineMode() {
+        function renderFileCard(fileName, content) {
             const contentGrid = document.getElementById('content-grid');
-            const cachedData = getCachedData();
-            if (cachedData) {
-                allJsonFiles = cachedData;
-                renderContentPage();
-                showToast('当前处于离线模式，显示缓存内容', 'success');
-                return;
-            }
             
-            contentGrid.innerHTML = `
-                <div class="offline-mode">
-                    <i class="fas fa-wifi-slash"></i>
-                    <h3>无网络连接</h3>
-                    <p style="margin-top: 0.5rem;">当前域名：www.xn--vqq068m4ham0n.space，请检查网络连接后重试</p>
-                    <button class="retry-btn" onclick="retryLoadContent()">重试</button>
+            function formatDate(dateStr) {
+                try {
+                    return new Intl.DateTimeFormat('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }).format(new Date(dateStr));
+                } catch (e) {
+                    return '未知时间';
+                }
+            }
+
+            const card = document.createElement('div');
+            card.className = 'content-card';
+            card.innerHTML = `
+                <span class="card-author">${content.user || '未知用户'}</span>
+                <span class="card-time">${formatDate(content.publishTime)}</span>
+                <div class="card-content">${content.content ? content.content.replace(/\n/g, '<br>') : '内容为空'}</div>
+                <div style="margin-top:1rem; font-size:0.8rem; color:var(--accent);">
+                    文件：${fileName}
                 </div>
             `;
-        }
 
-        function retryLoadContent() {
-            const contentGrid = document.getElementById('content-grid');
-            contentGrid.innerHTML = `
-                <div class="loading">
-                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                    重试中...
-                </div>
-            `;
-            retryCount++;
-            if (retryCount > MAX_RETRY) {
-                retryCount = 0;
-                showToast('重试次数已达上限', 'error');
-            }
-            loadAllJsonFiles();
-        }
-
-        async function fetchWithRetry(url, options = {}, retry = 0) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 15000);
-            
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok && retry < MAX_RETRY) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
-                    return fetchWithRetry(url, options, retry + 1);
-                }
-                
-                return response;
-            } catch (error) {
-                clearTimeout(timeoutId);
-                
-                if ((error.name === 'AbortError' || error.message.includes('Failed to fetch')) && retry < MAX_RETRY) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
-                    return fetchWithRetry(url, options, retry + 1);
-                }
-                
-                throw error;
-            }
+            contentGrid.appendChild(card);
         }
     </script>
 </body>
