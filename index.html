@@ -353,8 +353,8 @@
             owner: 'HYQY2012',
             repo: 'hyqy2012.github.io',
             path: 'articles',
-            apiUrl: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
-            token: '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'
+            apiUrl: 'https://hyqy2012.github.io/articles',
+            token: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN'
         };
 
         const CACHE_CONFIG = {
@@ -383,46 +383,35 @@
             
             try {
                 let cachedData = getCachedData();
+                
                 if (cachedData) {
                     allFiles = cachedData;
                     renderContentPage();
                     return;
                 }
-                
+
                 if (!navigator.onLine) {
                     showOfflineMode();
                     return;
                 }
 
-                const response = await fetchWithRetry(GITHUB_CONFIG.apiUrl, {
+                const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/data_xxxx.json`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json',
                         'Cache-Control': 'max-age=300',
-                        'User-Agent': 'HYQY Chat/1.0' // 必须添加User-Agent
+                        'User-Agent': 'HYQY Chat/1.0'
                     },
-                    timeout: 10000 // 10秒超时
+                    timeout: 10000
                 });
 
                 if (!response.ok) {
                     const errorText = await response.text().catch(() => '');
-                    throw new Error(`GitHub API 错误: ${response.status} ${response.statusText}\n${errorText}`);
+                    throw new Error(`请求错误: ${response.status} ${response.statusText}\n${errorText}`);
                 }
 
                 const files = await response.json();
                 
-                allFiles = files
-                    .filter(file => file.name.endsWith('.json') && file.name.startsWith('data_'))
-                    .sort((a, b) => {
-                        const dateA = getFileLastModifiedDate(a);
-                        const dateB = getFileLastModifiedDate(b);
-                        
-                        if (dateA && dateB) return new Date(dateB) - new Date(dateA);
-                        else if (dateA) return -1;
-                        else if (dateB) return 1;
-                        else return b.name.localeCompare(a.name);
-                    });
+                allFiles = Array.isArray(files) ? files : [files];
 
                 setCachedData(allFiles);
 
@@ -444,11 +433,11 @@
                 
                 let errorMsg = '加载失败';
                 if (error.message.includes('Failed to fetch')) {
-                    errorMsg = '网络请求失败，请检查网络连接或GitHub Token配置';
+                    errorMsg = '网络请求失败，请检查网络连接或JSON文件路径';
                 } else if (error.message.includes('401')) {
                     errorMsg = 'Token无效或权限不足，请检查GitHub Personal Access Token';
                 } else if (error.message.includes('403')) {
-                    errorMsg = 'API请求次数超限，请稍后再试';
+                    errorMsg = '请求次数超限，请稍后再试';
                 } else {
                     errorMsg = error.message;
                 }
@@ -457,7 +446,7 @@
                     <div class="offline-mode">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>${errorMsg}</h3>
-                        <p style="margin-top: 0.5rem;">请检查：1.网络连接 2.GitHub Token有效性 3.GitHub仓库权限</p>
+                        <p style="margin-top: 0.5rem;">请检查：1.网络连接 2.JSON文件路径 3.文件是否存在</p>
                         <button class="retry-btn" onclick="retryLoadContent()">重试</button>
                     </div>
                 `;
@@ -477,14 +466,14 @@
                 clearTimeout(timeoutId);
                 
                 if (!response.ok && retry < MAX_RETRY) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1))); // 指数退避
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
                     return fetchWithRetry(url, options, retry + 1);
                 }
                 
                 return response;
             } catch (error) {
                 clearTimeout(timeoutId);
-
+                
                 if ((error.name === 'AbortError' || error.message.includes('Failed to fetch')) && retry < MAX_RETRY) {
                     await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
                     return fetchWithRetry(url, options, retry + 1);
@@ -492,26 +481,6 @@
                 
                 throw error;
             }
-        }
-
-        function getFileLastModifiedDate(file) {
-            try {
-                if (file?.commit?.commit?.author?.date) {
-                    return file.commit.commit.author.date;
-                }
-                else if (file?.last_modified) {
-                    return file.last_modified;
-                }
-                else if (file?.name?.includes('_') && file.name.endsWith('.json')) {
-                    const timestamp = file.name.split('_')[1]?.replace('.json', '');
-                    if (timestamp && !isNaN(timestamp)) {
-                        return new Date(parseInt(timestamp)).toISOString();
-                    }
-                }
-            } catch (e) {
-                console.warn(`获取文件${file?.name}日期失败:`, e);
-            }
-            return null;
         }
 
         async function renderContentPage() {
@@ -540,7 +509,7 @@
             const validResults = results.filter(Boolean);
 
             validResults.forEach(({ file, content }, index) => {
-                const fileId = file.name;
+                const fileId = file.name || 'default';
                 const likesCount = content.likes || 0;
                 const userLiked = content.userLiked || [];
                 const comments = content.comments || [];
@@ -580,8 +549,9 @@
 
                 contentGrid.appendChild(card);
             });
-            bindEventListeners();
 
+            bindEventListeners();
+            
             document.getElementById('load-more-btn').onclick = () => {
                 currentPage++;
                 renderContentPage();
@@ -590,19 +560,10 @@
 
         async function parseFileContent(file) {
             try {
-                let content;
-                if (file.content) {
-                    content = JSON.parse(atob(file.content));
-                } else {
-                    const response = await fetch(file.download_url, {
-                        cache: 'force-cache',
-                        timeout: 5000
-                    });
-                    content = await response.json();
-                }
+                let content = typeof file === 'object' ? file : JSON.parse(JSON.stringify(file));
                 return { file, content };
             } catch (e) {
-                console.error(`解析${file.name}失败:`, e);
+                console.error(`解析内容失败:`, e);
                 return {
                     file,
                     content: {
@@ -777,7 +738,7 @@
                 const fileContent = JSON.stringify(content, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
                 
-                const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
+                const response = await fetchWithRetry(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}/${fileName}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `token ${GITHUB_CONFIG.token}`,
@@ -797,6 +758,7 @@
                     const errorData = await response.json().catch(() => ({}));
                     throw new Error(errorData.message || `更新失败: ${response.status}`);
                 }
+                
                 invalidateCache();
                 return await response.json();
             } catch (e) {
