@@ -1,11 +1,10 @@
+<!-- 小何已全面修复! -->
 <!DOCTYPE html>
 <html lang="zh-CN">
-<!-- 已修复：适配新域名www.xn--vqq068m4ham0n.space，解决跨域读取JSON、Punycode编码兼容、HTTPS适配问题 -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Access-Control-Allow-Origin" content="*">
-    <link rel="icon" type="image/png" href="img/logo.svg">
+    <meta http-equiv="Content-Type" content="application/json; charset=utf-8">
     <title>HYQY Chat</title>
     <style>
         :root {
@@ -352,40 +351,35 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // 核心修复：适配新域名www.xn--vqq068m4ham0n.space，使用相对路径解决跨域
-        const GITHUB_CONFIG = {
-            owner: 'HYQY2012',
-            repo: 'hyqy2012.github.io',
-            path: 'articles',
-            apiUrl: './articles', // 关键：相对路径适配新域名同源请求
-            token: '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'
+        const CONFIG = {
+            baseUrl: 'https://www.xn--vqq068m4ham0n.space/articles',
+            token: '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',
+            githubRepoApi: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles'
         };
 
         const CACHE_CONFIG = {
             ttl: 5 * 60 * 1000,
-            cacheKey: 'hyqy_chat_content'
+            cacheKey: 'hyqy_chat_data_json'
         };
 
-        let allFiles = [];
+        let allJsonFiles = [];
         let currentPage = 1;
         const PAGE_SIZE = 10;
         let retryCount = 0;
         const MAX_RETRY = 3;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // 跳过Token校验（读取JSON无需Token，仅点赞/评论需要）
-            await loadPublishedContent();
+            await loadAllJsonFiles();
         });
 
-        async function loadPublishedContent() {
+        async function loadAllJsonFiles() {
             const contentGrid = document.getElementById('content-grid');
             const loadMoreBtn = document.getElementById('load-more-btn');
             
             try {
                 let cachedData = getCachedData();
-                
                 if (cachedData) {
-                    allFiles = cachedData;
+                    allJsonFiles = cachedData;
                     renderContentPage();
                     return;
                 }
@@ -395,35 +389,34 @@
                     return;
                 }
 
-                // 适配新域名：相对路径请求JSON，强制同源，延长超时
-                const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/data_xxxx.json`, {
+                const response = await fetchWithRetry(CONFIG.githubRepoApi, {
                     method: 'GET',
                     headers: {
-                        'Cache-Control': 'max-age=300',
-                        'User-Agent': 'HYQY Chat/1.0',
-                        'Accept': 'application/json'
+                        'Authorization': `token ${CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'HYQY Chat/1.0'
                     },
-                    timeout: 15000, // 适配Punycode域名解析延迟
-                    mode: 'same-origin' // 强制同源，避免跨域
+                    timeout: 15000
                 });
 
                 if (!response.ok) {
-                    const errorText = await response.text().catch(() => '');
-                    throw new Error(`请求错误: ${response.status} ${response.statusText}\n${errorText}`);
+                    throw new Error(`获取文件列表失败: ${response.status} ${response.statusText}`);
                 }
 
-                const files = await response.json();
+                const allFiles = await response.json();
                 
-                allFiles = Array.isArray(files) ? files : [files];
+                allJsonFiles = allFiles.filter(file => {
+                    return /^data_\d+\.json$/.test(file.name) && file.type === 'file';
+                });
 
-                setCachedData(allFiles);
+                setCachedData(allJsonFiles);
 
-                if (allFiles.length === 0) {
+                if (allJsonFiles.length === 0) {
                     contentGrid.innerHTML = `
                         <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--accent);">
-                            <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                            <h3>暂无聊天内容</h3>
-                            <p style="margin-top: 0.5rem;">点击"发布内容"按钮创建第一条聊天内容</p>
+                            <i class="fas fa-file-code" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <h3>暂无data_xxxx.json格式的内容</h3>
+                            <p style="margin-top: 0.5rem;">请检查articles文件夹下是否有符合命名规则的JSON文件</p>
                         </div>
                     `;
                     return;
@@ -432,15 +425,15 @@
                 renderContentPage();
 
             } catch (error) {
-                console.error('加载内容失败:', error);
+                console.error('加载JSON文件列表失败:', error);
                 
                 let errorMsg = '加载失败';
-                if (error.message.includes('Failed to fetch')) {
-                    errorMsg = '网络请求失败，请检查：1.JSON文件路径 2.文件名大小写 3.域名解析';
-                } else if (error.message.includes('404')) {
-                    errorMsg = 'JSON文件不存在，请检查articles文件夹下的文件名是否为data_xxxx.json';
+                if (error.message.includes('401')) {
+                    errorMsg = 'GitHub Token无效/权限不足';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMsg = '网络请求失败，请检查域名解析或网络';
                 } else if (error.message.includes('Unexpected token')) {
-                    errorMsg = 'JSON格式错误，请检查文件内容是否符合JSON规范';
+                    errorMsg = 'JSON文件格式错误，无法解析';
                 } else {
                     errorMsg = error.message;
                 }
@@ -449,41 +442,10 @@
                     <div class="offline-mode">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>${errorMsg}</h3>
-                        <p style="margin-top: 0.5rem;">当前域名：www.xn--vqq068m4ham0n.space</p>
+                        <p style="margin-top: 0.5rem;">当前路径：${CONFIG.baseUrl}/data_xxxx.json</p>
                         <button class="retry-btn" onclick="retryLoadContent()">重试</button>
                     </div>
                 `;
-            }
-        }
-
-        async function fetchWithRetry(url, options = {}, retry = 0) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 15000);
-            
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal,
-                    mode: 'same-origin' // 适配新域名：强制同源请求
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok && retry < MAX_RETRY) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
-                    return fetchWithRetry(url, options, retry + 1);
-                }
-                
-                return response;
-            } catch (error) {
-                clearTimeout(timeoutId);
-                
-                if ((error.name === 'AbortError' || error.message.includes('Failed to fetch')) && retry < MAX_RETRY) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
-                    return fetchWithRetry(url, options, retry + 1);
-                }
-                
-                throw error;
             }
         }
 
@@ -493,7 +455,7 @@
             
             const startIndex = (currentPage - 1) * PAGE_SIZE;
             const endIndex = startIndex + PAGE_SIZE;
-            const pageFiles = allFiles.slice(startIndex, endIndex);
+            const pageFiles = allJsonFiles.slice(startIndex, endIndex);
 
             if (currentPage === 1) {
                 contentGrid.innerHTML = '';
@@ -505,15 +467,15 @@
                 return;
             }
 
-            loadMoreBtn.disabled = endIndex >= allFiles.length;
-            loadMoreBtn.textContent = endIndex >= allFiles.length ? '没有更多内容' : '加载更多';
+            loadMoreBtn.disabled = endIndex >= allJsonFiles.length;
+            loadMoreBtn.textContent = endIndex >= allJsonFiles.length ? '没有更多内容' : '加载更多';
 
-            const promises = pageFiles.map(file => parseFileContent(file));
+            const promises = pageFiles.map(file => loadSingleJsonFile(file));
             const results = await Promise.all(promises);
             const validResults = results.filter(Boolean);
 
             validResults.forEach(({ file, content }, index) => {
-                const fileId = file.name || 'default';
+                const fileId = file.name.replace('.json', '');
                 const likesCount = content.likes || 0;
                 const userLiked = content.userLiked || [];
                 const comments = content.comments || [];
@@ -562,17 +524,30 @@
             };
         }
 
-        async function parseFileContent(file) {
+        async function loadSingleJsonFile(file) {
             try {
-                let content = typeof file === 'object' ? file : JSON.parse(JSON.stringify(file));
+                const response = await fetchWithRetry(`${CONFIG.baseUrl}/${file.name}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    timeout: 10000
+                });
+
+                if (!response.ok) {
+                    throw new Error(`文件加载失败: ${file.name}`);
+                }
+
+                const content = await response.json();
                 return { file, content };
             } catch (e) {
-                console.error(`解析内容失败:`, e);
+                console.error(`加载${file.name}失败:`, e);
                 return {
                     file,
                     content: {
                         user: '未知用户',
-                        content: '内容加载失败',
+                        content: `文件${file.name}解析失败`,
                         publishTime: new Date().toISOString(),
                         likes: 0,
                         userLiked: [],
@@ -604,6 +579,7 @@
                 btn.addEventListener('click', async function() {
                     const fileId = this.getAttribute('data-id');
                     const sha = this.getAttribute('data-sha');
+                    const jsonFileName = `${fileId}.json`;
                     
                     if (!sha) {
                         showToast('缺少文件标识，无法更新点赞', 'error');
@@ -614,9 +590,13 @@
                     let count = parseInt(countElement.textContent);
                     
                     try {
-                        const fileContent = await getFileContent(fileId);
-                        let userLiked = fileContent.userLiked || [];
+                        const response = await fetchWithRetry(`${CONFIG.baseUrl}/${jsonFileName}`, {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const fileContent = await response.json();
                         
+                        let userLiked = fileContent.userLiked || [];
                         if (userLiked.includes('current_user')) {
                             userLiked = userLiked.filter(id => id !== 'current_user');
                             this.classList.remove('liked');
@@ -630,7 +610,7 @@
                         fileContent.likes = count;
                         fileContent.userLiked = userLiked;
                         
-                        await updateFileContent(fileId, sha, fileContent, '更新点赞数');
+                        await updateGithubFile(jsonFileName, sha, fileContent, '更新点赞数');
                         
                         countElement.textContent = count;
                         showToast('点赞状态已更新');
@@ -660,6 +640,7 @@
                 btn.addEventListener('click', async function() {
                     const fileId = this.getAttribute('data-id');
                     const sha = this.getAttribute('data-sha');
+                    const jsonFileName = `${fileId}.json`;
                     
                     if (!sha) {
                         showToast('缺少文件标识，无法发布评论', 'error');
@@ -672,17 +653,21 @@
                     if (!commentText) return;
 
                     try {
-                        const fileContent = await getFileContent(fileId);
-                        fileContent.comments = fileContent.comments || [];
+                        const response = await fetchWithRetry(`${CONFIG.baseUrl}/${jsonFileName}`, {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const fileContent = await response.json();
                         
+                        fileContent.comments = fileContent.comments || [];
                         const newComment = {
                             author: '访客',
                             text: commentText,
                             time: new Date().toISOString()
                         };
-
                         fileContent.comments.push(newComment);
-                        await updateFileContent(fileId, sha, fileContent, '添加新评论');
+                        
+                        await updateGithubFile(jsonFileName, sha, fileContent, '添加新评论');
                         
                         const commentsList = document.getElementById(`comments-list-${fileId}`);
                         const commentElement = document.createElement('div');
@@ -691,7 +676,6 @@
                             <div class="comment-author">${newComment.author}</div>
                             <div class="comment-text">${newComment.text}</div>
                         `;
-
                         commentsList.appendChild(commentElement);
                         input.value = '';
 
@@ -708,44 +692,15 @@
             });
         }
 
-        async function getFileContent(fileName) {
-            try {
-                const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/${fileName}`, {
-                    headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`无法获取文件: ${response.status}`);
-                }
-                
-                const fileData = await response.json();
-                const content = atob(fileData.content);
-                return JSON.parse(content);
-            } catch (e) {
-                console.error(`获取文件${fileName}内容失败:`, e);
-                return {
-                    user: '未知用户',
-                    content: '',
-                    publishTime: new Date().toISOString(),
-                    likes: 0,
-                    userLiked: [],
-                    comments: []
-                };
-            }
-        }
-
-        async function updateFileContent(fileName, sha, content, commitMessage) {
+        async function updateGithubFile(fileName, sha, content, commitMessage) {
             try {
                 const fileContent = JSON.stringify(content, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
                 
-                const response = await fetchWithRetry(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}/${fileName}`, {
+                const response = await fetchWithRetry(`https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles/${fileName}`, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Authorization': `token ${CONFIG.token}`,
                         'Accept': 'application/vnd.github.v3+json',
                         'Content-Type': 'application/json',
                         'User-Agent': 'HYQY Chat/1.0'
@@ -816,27 +771,11 @@
             localStorage.removeItem(CACHE_CONFIG.cacheKey);
         }
 
-        function showConfigError() {
-            const contentGrid = document.getElementById('content-grid');
-            contentGrid.innerHTML = `
-                <div class="offline-mode">
-                    <i class="fas fa-cog"></i>
-                    <h3>配置错误</h3>
-                    <p style="margin-top: 0.5rem;">请先配置有效的GitHub Personal Access Token</p>
-                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--secondary);">
-                        1. 访问 https://github.com/settings/tokens <br>
-                        2. 生成带repo权限的Token <br>
-                        3. 替换代码中的 YOUR_GITHUB_PERSONAL_ACCESS_TOKEN
-                    </p>
-                </div>
-            `;
-        }
-
         function showOfflineMode() {
             const contentGrid = document.getElementById('content-grid');
             const cachedData = getCachedData();
             if (cachedData) {
-                allFiles = cachedData;
+                allJsonFiles = cachedData;
                 renderContentPage();
                 showToast('当前处于离线模式，显示缓存内容', 'success');
                 return;
@@ -865,7 +804,37 @@
                 retryCount = 0;
                 showToast('重试次数已达上限', 'error');
             }
-            loadPublishedContent();
+            loadAllJsonFiles();
+        }
+
+        async function fetchWithRetry(url, options = {}, retry = 0) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 15000);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok && retry < MAX_RETRY) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
+                    return fetchWithRetry(url, options, retry + 1);
+                }
+                
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                
+                if ((error.name === 'AbortError' || error.message.includes('Failed to fetch')) && retry < MAX_RETRY) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
+                    return fetchWithRetry(url, options, retry + 1);
+                }
+                
+                throw error;
+            }
         }
     </script>
 </body>
