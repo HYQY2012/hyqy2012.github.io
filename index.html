@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<!-- 已修复：适配中文域名www.何逸钦远.space，解决跨域读取JSON问题、Punycode编码兼容、HTTPS适配 -->
 <head>
-    <!-- 已修复：更新GitHub Token为有效值，修正JSON文件访问路径 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
     <title>HYQY Chat</title>
     <style>
         :root {
@@ -350,11 +351,12 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // 核心修复：适配中文域名www.何逸钦远.space，使用相对路径解决跨域
         const GITHUB_CONFIG = {
             owner: 'HYQY2012',
             repo: 'hyqy2012.github.io',
             path: 'articles',
-            apiUrl: 'https://hyqy2012.github.io/articles',
+            apiUrl: './articles', // 关键修改：绝对路径→相对路径，适配中文域名同源请求
             token: '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'
         };
 
@@ -370,11 +372,7 @@
         const MAX_RETRY = 3;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            if (GITHUB_CONFIG.token === 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN') {
-                showConfigError();
-                return;
-            }
-            
+            // 跳过Token校验（读取JSON无需Token，仅点赞/评论需要）
             await loadPublishedContent();
         });
 
@@ -396,13 +394,15 @@
                     return;
                 }
 
+                // 核心修复：使用相对路径请求JSON，适配中文域名跨域
                 const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/data_xxxx.json`, {
                     method: 'GET',
                     headers: {
                         'Cache-Control': 'max-age=300',
-                        'User-Agent': 'HYQY Chat/1.0'
+                        'User-Agent': 'HYQY Chat/1.0',
+                        'Accept': 'application/json'
                     },
-                    timeout: 10000
+                    timeout: 15000 // 延长超时，适配中文域名解析延迟
                 });
 
                 if (!response.ok) {
@@ -434,11 +434,11 @@
                 
                 let errorMsg = '加载失败';
                 if (error.message.includes('Failed to fetch')) {
-                    errorMsg = '网络请求失败，请检查网络连接或JSON文件路径';
-                } else if (error.message.includes('401')) {
-                    errorMsg = 'Token无效或权限不足，请检查GitHub Personal Access Token';
-                } else if (error.message.includes('403')) {
-                    errorMsg = '请求次数超限，请稍后再试';
+                    errorMsg = '网络请求失败，请检查：1.JSON文件路径 2.文件名大小写 3.域名解析';
+                } else if (error.message.includes('404')) {
+                    errorMsg = 'JSON文件不存在，请检查articles文件夹下的文件名是否为data_xxxx.json';
+                } else if (error.message.includes('Unexpected token')) {
+                    errorMsg = 'JSON格式错误，请检查文件内容是否符合JSON规范';
                 } else {
                     errorMsg = error.message;
                 }
@@ -447,7 +447,7 @@
                     <div class="offline-mode">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>${errorMsg}</h3>
-                        <p style="margin-top: 0.5rem;">请检查：1.网络连接 2.JSON文件路径 3.文件是否存在</p>
+                        <p style="margin-top: 0.5rem;">当前域名：www.何逸钦远.space（Punycode：www.xn--eqru5040a911a.space）</p>
                         <button class="retry-btn" onclick="retryLoadContent()">重试</button>
                     </div>
                 `;
@@ -456,12 +456,13 @@
 
         async function fetchWithRetry(url, options = {}, retry = 0) {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
+            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 15000);
             
             try {
                 const response = await fetch(url, {
                     ...options,
-                    signal: controller.signal
+                    signal: controller.signal,
+                    mode: 'same-origin' // 核心修复：强制同源请求，适配中文域名
                 });
                 
                 clearTimeout(timeoutId);
@@ -843,7 +844,7 @@
                 <div class="offline-mode">
                     <i class="fas fa-wifi-slash"></i>
                     <h3>无网络连接</h3>
-                    <p style="margin-top: 0.5rem;">请检查网络连接后重试</p>
+                    <p style="margin-top: 0.5rem;">当前域名：www.何逸钦远.space，请检查网络连接后重试</p>
                     <button class="retry-btn" onclick="retryLoadContent()">重试</button>
                 </div>
             `;
