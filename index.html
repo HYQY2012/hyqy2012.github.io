@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<!-- 已修复：适配中文域名www.何逸钦远.space，解决跨域读取JSON问题、Punycode编码兼容、HTTPS适配 -->
+<!-- 已修复：适配新域名www.xn--vqq068m4ham0n.space，解决跨域读取JSON、Punycode编码兼容、HTTPS适配问题 -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <link rel="icon" type="image/png" href="img/logo.svg">
     <title>HYQY Chat</title>
     <style>
         :root {
@@ -351,12 +352,12 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // 核心修复：适配中文域名www.何逸钦远.space，使用相对路径解决跨域
+        // 核心修复：适配新域名www.xn--vqq068m4ham0n.space，使用相对路径解决跨域
         const GITHUB_CONFIG = {
             owner: 'HYQY2012',
             repo: 'hyqy2012.github.io',
             path: 'articles',
-            apiUrl: './articles', // 关键修改：绝对路径→相对路径，适配中文域名同源请求
+            apiUrl: './articles', // 关键：相对路径适配新域名同源请求
             token: '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'
         };
 
@@ -394,7 +395,7 @@
                     return;
                 }
 
-                // 核心修复：使用相对路径请求JSON，适配中文域名跨域
+                // 适配新域名：相对路径请求JSON，强制同源，延长超时
                 const response = await fetchWithRetry(`${GITHUB_CONFIG.apiUrl}/data_xxxx.json`, {
                     method: 'GET',
                     headers: {
@@ -402,7 +403,8 @@
                         'User-Agent': 'HYQY Chat/1.0',
                         'Accept': 'application/json'
                     },
-                    timeout: 15000 // 延长超时，适配中文域名解析延迟
+                    timeout: 15000, // 适配Punycode域名解析延迟
+                    mode: 'same-origin' // 强制同源，避免跨域
                 });
 
                 if (!response.ok) {
@@ -447,7 +449,7 @@
                     <div class="offline-mode">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>${errorMsg}</h3>
-                        <p style="margin-top: 0.5rem;">当前域名：www.何逸钦远.space（Punycode：www.xn--eqru5040a911a.space）</p>
+                        <p style="margin-top: 0.5rem;">当前域名：www.xn--vqq068m4ham0n.space</p>
                         <button class="retry-btn" onclick="retryLoadContent()">重试</button>
                     </div>
                 `;
@@ -462,7 +464,7 @@
                 const response = await fetch(url, {
                     ...options,
                     signal: controller.signal,
-                    mode: 'same-origin' // 核心修复：强制同源请求，适配中文域名
+                    mode: 'same-origin' // 适配新域名：强制同源请求
                 });
                 
                 clearTimeout(timeoutId);
@@ -844,7 +846,7 @@
                 <div class="offline-mode">
                     <i class="fas fa-wifi-slash"></i>
                     <h3>无网络连接</h3>
-                    <p style="margin-top: 0.5rem;">当前域名：www.何逸钦远.space，请检查网络连接后重试</p>
+                    <p style="margin-top: 0.5rem;">当前域名：www.xn--vqq068m4ham0n.space，请检查网络连接后重试</p>
                     <button class="retry-btn" onclick="retryLoadContent()">重试</button>
                 </div>
             `;
