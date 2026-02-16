@@ -2,7 +2,15 @@
   "user": "你好",
   "content": "彳亍",
   "publishTime": "2026-02-16T03:10:01.303Z",
-  "likes": 0,
-  "userLiked": [],
-  "comments": []
+  "likes": 1,
+  "userLiked": [
+    "visitor"
+  ],
+  "comments": [
+    {
+      "author": "访客",
+      "text": "彳亍",
+      "time": "2026-02-16T08:43:26.439Z"
+    }
+  ]
 }
