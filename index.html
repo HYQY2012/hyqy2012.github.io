@@ -26,7 +26,7 @@ body{background:var(--light);color:var(--primary);min-height:100vh;line-height:1
 .card-actions{display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1px solid rgba(0,0,0,0.05)}
 .like-btn{display:flex;align-items:center;gap:0.5rem;background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.95rem;transition:var(--transition)}
 .like-btn:hover{color:var(--error)}
-.like-btn.liked{color:var(--error)}
+.like-btn.liked{color:var(--error)!important}
 .comment-btn{display:flex;align-items:center;gap:0.5rem;background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.95rem;transition:var(--transition)}
 .comment-btn:hover{color:var(--primary)}
 .comments-section{margin-top:1.5rem;max-height:0;overflow:hidden;transition:var(--transition)}
@@ -74,6 +74,7 @@ const CONFIG = {
 const START = 1;
 const END = 9999;
 let fileShaMap = {};
+let localLiked = new Set();
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadAllFiles();
@@ -86,26 +87,33 @@ async function loadAllFiles() {
 
   for (let i = START; i <= END; i++) {
     const numStr = i.toString().padStart(4, "0");
-    const jsonUrl = `${CONFIG.baseUrl}/data_${numStr}.json`;
+    const fileName = `data_${numStr}.json`;
+    const jsonUrl = `${CONFIG.baseUrl}/${fileName}`;
+    
     try {
-      const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 2500);
-      
-      const fileInfoRes = await fetch(`${CONFIG.repoApi}/data_${numStr}.json`, {
-        headers: { Authorization: `token ${CONFIG.token}` }
+      const fileInfoRes = await fetch(`${CONFIG.repoApi}/${fileName}`, {
+        headers: { 
+          Authorization: `token ${CONFIG.token}`,
+          Accept: 'application/vnd.github.v3+json'
+        }
       });
       
-      let sha = "";
       if (fileInfoRes.ok) {
         const fileInfo = await fileInfoRes.json();
-        sha = fileInfo.sha;
-        fileShaMap[numStr] = sha;
+        fileShaMap[numStr] = fileInfo.sha;
       }
 
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 3000);
       const res = await fetch(jsonUrl, { signal: ctrl.signal });
-      if (!res.ok) continue;
       
+      if (!res.ok) continue;
       const data = await res.json();
+      
+      if ((data.userLiked || []).includes("visitor")) {
+        localLiked.add(numStr);
+      }
+      
       renderCard(numStr, data);
       found++;
     } catch (e) {
@@ -126,7 +134,7 @@ function renderCard(id, data) {
 
   const likes = data.likes || 0;
   const comments = data.comments || [];
-  const isLiked = (data.userLiked || []).includes("visitor");
+  const isLiked = localLiked.has(id);
 
   function formatDate(t) {
     try {
@@ -144,12 +152,18 @@ function renderCard(id, data) {
     <span class="card-time">${formatDate(data.publishTime)}</span>
     <div class="card-content">${(data.content || "").replace(/\n/g, "<br>")}</div>
     <div class="card-actions">
-      <button class="like-btn ${isLiked ? 'liked' : ''}"><i class="fas fa-heart"></i><span>${likes}</span></button>
-      <button class="comment-btn"><i class="fas fa-comment"></i><span>${comments.length}</span></button>
+      <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${id}">
+        <i class="fas fa-heart"></i>
+        <span class="like-count">${likes}</span>
+      </button>
+      <button class="comment-btn" data-id="${id}">
+        <i class="fas fa-comment"></i>
+        <span>${comments.length}</span>
+      </button>
     </div>
-    <div class="comments-section">
+    <div class="comments-section" id="comments-${id}">
       <textarea class="comment-input" placeholder="写下评论..."></textarea>
-      <button class="comment-submit">发布评论</button>
+      <button class="comment-submit" data-id="${id}">发布评论</button>
       <div class="comments-list">
         ${comments.map(c => `
         <div class="comment-item">
@@ -160,72 +174,84 @@ function renderCard(id, data) {
     </div>
   `;
   grid.appendChild(card);
-}
-
-document.addEventListener("click", async e => {
-  const card = e.target.closest(".content-card");
-  if (!card) return;
-  const id = card.getAttribute("data-id");
-  const fileName = `data_${id}.json`;
-
-  if (e.target.closest(".like-btn")) {
-    const btn = e.target.closest(".like-btn");
-    const numEl = btn.querySelector("span");
-    const currentLikes = parseInt(numEl.textContent);
-    const isLiked = btn.classList.contains("liked");
+  
+  const likeBtn = card.querySelector(".like-btn");
+  likeBtn.addEventListener("click", async function() {
+    const id = this.getAttribute("data-id");
+    const fileName = `data_${id}.json`;
+    const countEl = this.querySelector(".like-count");
+    let currentLikes = parseInt(countEl.textContent);
+    
+    if (localLiked.has(id)) {
+      this.classList.remove("liked");
+      countEl.textContent = currentLikes - 1;
+      localLiked.delete(id);
+    } else {
+      this.classList.add("liked");
+      countEl.textContent = currentLikes + 1;
+      localLiked.add(id);
+    }
 
     try {
       const res = await fetch(`${CONFIG.baseUrl}/${fileName}`);
       const data = await res.json();
       
-      data.likes = isLiked ? currentLikes - 1 : currentLikes + 1;
+      data.likes = localLiked.has(id) ? currentLikes + 1 : currentLikes - 1;
       data.userLiked = data.userLiked || [];
+      data.userLiked = localLiked.has(id) 
+        ? [...new Set([...data.userLiked, "visitor"])] 
+        : data.userLiked.filter(u => u !== "visitor");
       
-      if (isLiked) {
-        data.userLiked = data.userLiked.filter(u => u !== "visitor");
-        btn.classList.remove("liked");
-      } else {
-        data.userLiked.push("visitor");
-        btn.classList.add("liked");
-      }
-      
-      await updateGithubFile(fileName, data);
-      numEl.textContent = data.likes;
+      await updateGithubFile(fileName, data, id);
       showToast("点赞状态已同步", "success");
     } catch (err) {
-      showToast("点赞同步失败", "error");
-      console.error(err);
+      if (localLiked.has(id)) {
+        this.classList.remove("liked");
+        countEl.textContent = currentLikes;
+        localLiked.delete(id);
+      } else {
+        this.classList.add("liked");
+        countEl.textContent = currentLikes;
+        localLiked.add(id);
+      }
+      showToast("点赞同步失败，请重试", "error");
+      console.error("点赞API失败：", err);
     }
-  }
+  });
 
-  if (e.target.closest(".comment-btn")) {
-    const section = card.querySelector(".comments-section");
+  const commentBtn = card.querySelector(".comment-btn");
+  commentBtn.addEventListener("click", function() {
+    const id = this.getAttribute("data-id");
+    const section = document.getElementById(`comments-${id}`);
     section.classList.toggle("active");
-  }
+  });
 
-  if (e.target.closest(".comment-submit")) {
-    const btn = e.target.closest(".comment-submit");
-    const input = card.querySelector(".comment-input");
+  const commentSubmit = card.querySelector(".comment-submit");
+  commentSubmit.addEventListener("click", async function() {
+    const id = this.getAttribute("data-id");
+    const fileName = `data_${id}.json`;
+    const input = this.parentElement.querySelector(".comment-input");
     const text = input.value.trim();
-    const list = card.querySelector(".comments-list");
+    const list = this.parentElement.querySelector(".comments-list");
     const countEl = card.querySelector(".comment-btn span");
 
     if (!text) return;
-    btn.disabled = true;
-    btn.textContent = "发布中...";
+    this.disabled = true;
+    this.textContent = "发布中...";
 
     try {
       const res = await fetch(`${CONFIG.baseUrl}/${fileName}`);
       const data = await res.json();
       
       data.comments = data.comments || [];
-      data.comments.push({
+      const newComment = {
         author: "访客",
         text: text,
         time: new Date().toISOString()
-      });
+      };
+      data.comments.push(newComment);
       
-      await updateGithubFile(fileName, data);
+      await updateGithubFile(fileName, data, id);
       
       const item = document.createElement("div");
       item.className = "comment-item";
@@ -234,19 +260,21 @@ document.addEventListener("click", async e => {
       
       countEl.textContent = data.comments.length;
       input.value = "";
-      showToast("评论已发布", "success");
+      showToast("评论发布成功", "success");
     } catch (err) {
       showToast("评论发布失败", "error");
       console.error(err);
     } finally {
-      btn.disabled = false;
-      btn.textContent = "发布评论";
+      this.disabled = false;
+      this.textContent = "发布评论";
     }
-  }
-});
+  });
+}
 
-async function updateGithubFile(fileName, content) {
-  const sha = fileShaMap[fileName.replace("data_", "").replace(".json", "")];
+async function updateGithubFile(fileName, content, id) {
+  const sha = fileShaMap[id];
+  if (!sha) throw new Error("文件SHA不存在");
+  
   const contentStr = JSON.stringify(content, null, 2);
   const base64Content = btoa(unescape(encodeURIComponent(contentStr)));
 
@@ -254,10 +282,11 @@ async function updateGithubFile(fileName, content) {
     method: "PUT",
     headers: {
       Authorization: `token ${CONFIG.token}`,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github.v3+json"
     },
     body: JSON.stringify({
-      message: `更新${fileName}`,
+      message: `更新${fileName}的点赞/评论`,
       content: base64Content,
       sha: sha,
       branch: "main"
@@ -265,11 +294,12 @@ async function updateGithubFile(fileName, content) {
   });
 
   if (!res.ok) {
-    throw new Error("更新文件失败");
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || `HTTP ${res.status}`);
   }
   
   const result = await res.json();
-  fileShaMap[fileName.replace("data_", "").replace(".json", "")] = result.content.sha;
+  fileShaMap[id] = result.content.sha;
 }
 
 function showToast(msg, type = "success") {
