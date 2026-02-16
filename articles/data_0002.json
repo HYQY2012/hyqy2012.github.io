@@ -2,13 +2,9 @@
   "user": "你好",
   "content": "为什么",
   "publishTime": "2026-02-16T03:12:40.960Z",
-  "likes": 0,
-  "userLiked": [],
-  "comments": [
-    {
-      "author": "访客",
-      "text": "你好",
-      "time": "2026-02-16T03:51:32.282Z"
-    }
-  ]
+  "likes": 1,
+  "userLiked": [
+    "visitor"
+  ],
+  "comments": []
 }
