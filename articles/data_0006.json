@@ -2,7 +2,9 @@
   "user": "何逸钦远",
   "content": "哈哈哈",
   "publishTime": "2026-02-16T09:21:46.570Z",
-  "likes": 0,
-  "userLiked": [],
+  "likes": 1,
+  "userLiked": [
+    "visitor"
+  ],
   "comments": []
 }
