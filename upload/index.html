@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,22 +8,33 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 * { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
-body { background: #ffffff; color: #000000; }
-.github-box { border: 1px solid #d1d5db; border-radius: 6px; }
-.github-btn { background: #000; color: #fff; border-radius: 6px; }
-.github-btn:hover { background: #222; }
-.github-tab { border-bottom: 2px solid transparent; }
+body { background: #ffffff; color: #000000; transition: all 0.3s ease; }
+.github-box { border: 1px solid #d1d5db; border-radius: 6px; transition: all 0.2s ease; }
+.github-box:hover { border-color: #9ca3af; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.github-btn { background: #000; color: #fff; border-radius: 6px; transition: all 0.2s ease; }
+.github-btn:hover { background: #222; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.github-btn:active { transform: translateY(0); }
+.github-tab { border-bottom: 2px solid transparent; transition: all 0.2s ease; cursor: pointer; }
 .github-tab.active { border-color: #000; color: #000; }
+.github-tab:hover { color: #4b5563; }
+input, textarea { transition: all 0.2s ease; }
+input:focus, textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2); }
+.hidden { display: none; }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+.fade-out { animation: fadeOut 0.3s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
+#msg { transition: all 0.3s ease; }
 </style>
 </head>
 <body class="min-h-screen">
 <div class="max-w-3xl mx-auto px-4 py-10">
   <h1 class="text-3xl font-bold tracking-tight mb-8 text-center">HYQY Chat</h1>
 
-  <div id="auth-view" class="github-box p-6 max-w-sm mx-auto">
+  <div id="auth-view" class="github-box p-6 max-w-sm mx-auto fade-in">
     <div class="flex gap-6 mb-6">
-      <div id="tab-login" class="github-tab active px-1 py-2 font-medium cursor-pointer">登录</div>
-      <div id="tab-register" class="github-tab px-1 py-2 font-medium cursor-pointer">注册</div>
+      <div id="tab-login" class="github-tab active px-1 py-2 font-medium">登录</div>
+      <div id="tab-register" class="github-tab px-1 py-2 font-medium">注册</div>
     </div>
 
     <div id="login-panel">
@@ -50,10 +62,10 @@ body { background: #ffffff; color: #000000; }
     </div>
   </div>
 
-  <div id="main-view" class="hidden">
+  <div id="main-view" class="hidden fade-in">
     <div class="github-box p-4 mb-4 flex justify-between items-center">
       <div>欢迎，<span id="show-user"></span></div>
-      <button id="logout" class="text-sm border border-gray-300 px-3 py-1 rounded">退出</button>
+      <button id="logout" class="text-sm border border-gray-300 px-3 py-1 rounded hover:bg-gray-50 transition">退出</button>
     </div>
 
     <div class="github-box p-6 mb-4">
@@ -63,8 +75,15 @@ body { background: #ffffff; color: #000000; }
       </div>
 
       <div class="mb-4">
-        <label class="block text-sm mb-1">内容/图片（支持 MD）</label>
-        <input id="upload-img" type="file" accept="image/*" class="text-sm mb-2 block">
+        <label class="block text-sm mb-1">上传本地图片</label>
+        <label for="upload-img" class="github-btn px-3 py-1 text-sm inline-block cursor-pointer">
+          选择图片 <input id="upload-img" type="file" accept="image/*" class="hidden">
+        </label>
+        <span id="img-name" class="text-sm ml-2 text-gray-500"></span>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm mb-1">内容（支持 MD）</label>
         <textarea id="content" rows="8" placeholder="# 标题
 **加粗**
 - 列表
@@ -79,18 +98,21 @@ body { background: #ffffff; color: #000000; }
 </div>
 
 <script>
+// ======================== 【必填】GitHub Token 填写位置 ========================
 const CONFIG = {
-  token: '',
+  token: '', // ← 在这里填入你的 GitHub Personal Access Token（需开启 repo 权限）
   owner: 'HYQY2012',
   userRepo: 'users',
   dataRepo: 'data',
   branch: 'main'
 }
+// =============================================================================
 
 const tabLogin = document.getElementById('tab-login')
 const tabRegister = document.getElementById('tab-register')
 const loginPanel = document.getElementById('login-panel')
 const registerPanel = document.getElementById('register-panel')
+const imgName = document.getElementById('img-name')
 
 tabLogin.onclick = () => {
   tabLogin.classList.add('active')
@@ -110,8 +132,13 @@ function sha256(str) {
 }
 
 function toast(text) {
-  document.getElementById('msg').textContent = text
-  setTimeout(() => { document.getElementById('msg').textContent = '' }, 3000)
+  const msg = document.getElementById('msg')
+  msg.textContent = text
+  msg.style.opacity = 1
+  setTimeout(() => { 
+    msg.style.opacity = 0
+    setTimeout(() => msg.textContent = '', 300)
+  }, 3000)
 }
 
 document.getElementById('do-register').onclick = async () => {
@@ -180,12 +207,17 @@ ${mdToHtml(text)}
 
 document.getElementById('upload-img').onchange = function (e) {
   const file = e.target.files[0]
-  if (!file) return
+  if (!file) {
+    imgName.textContent = ''
+    return
+  }
+  
+  imgName.textContent = file.name
   const reader = new FileReader()
   reader.onload = () => {
     const curr = document.getElementById('content').value
-    document.getElementById('content').value = curr + '\n![image](' + reader.result + ')'
-    toast('已插入图片')
+    document.getElementById('content').value = curr + '\n![本地图片](' + reader.result + ')'
+    toast('图片已插入编辑区')
   }
   reader.readAsDataURL(file)
 }
@@ -230,19 +262,23 @@ function mdToHtml(md) {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/^- (.*)$/gm, '<li>$1</li>')
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" style="max-width:100%">')
+    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" style="max-width:100%;margin:1rem 0;">')
     .replace(/\n/g, '<br>')
 }
 
 function showMain() {
-  document.getElementById('auth-view').classList.add('hidden')
-  document.getElementById('main-view').classList.remove('hidden')
-  document.getElementById('show-user').textContent = localStorage.getItem('hyqy-user')
+  document.getElementById('auth-view').classList.add('fade-out')
+  setTimeout(() => {
+    document.getElementById('auth-view').classList.add('hidden')
+    document.getElementById('main-view').classList.remove('hidden')
+    document.getElementById('show-user').textContent = localStorage.getItem('hyqy-user')
+  }, 300)
 }
 
 document.getElementById('logout').onclick = () => {
   localStorage.clear()
-  location.reload()
+  document.getElementById('main-view').classList.add('fade-out')
+  setTimeout(() => location.reload(), 300)
 }
 
 window.onload = () => {
