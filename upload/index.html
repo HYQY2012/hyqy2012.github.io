@@ -1,318 +1,253 @@
-<!-- 不信了，绝对行！ -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="https://www.xn--vqq068m4ham0n.space/img/logo.svg">
-    <title>发布内容 - HYQY Chat</title>
-    <style>
-        :root {
-            --primary: #1a1a1a;
-            --secondary: #333333;
-            --accent: #666666;
-            --light: #f8f8f8;
-            --success: #22c55e;
-            --error: #ef4444;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYQY Chat</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+* { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+body { background: #ffffff; color: #000000; }
+.github-box { border: 1px solid #d1d5db; border-radius: 6px; }
+.github-btn { background: #000; color: #fff; border-radius: 6px; }
+.github-btn:hover { background: #222; }
+.github-tab { border-bottom: 2px solid transparent; }
+.github-tab.active { border-color: #000; color: #000; }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-3xl mx-auto px-4 py-10">
+  <h1 class="text-3xl font-bold tracking-tight mb-8 text-center">HYQY Chat</h1>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
+  <div id="auth-view" class="github-box p-6 max-w-sm mx-auto">
+    <div class="flex gap-6 mb-6">
+      <div id="tab-login" class="github-tab active px-1 py-2 font-medium cursor-pointer">登录</div>
+      <div id="tab-register" class="github-tab px-1 py-2 font-medium cursor-pointer">注册</div>
+    </div>
 
-        body {
-            background-color: var(--light);
-            color: var(--primary);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+    <div id="login-panel">
+      <div class="mb-4">
+        <label class="block text-sm mb-1">用户名</label>
+        <input id="login-user" class="w-full border border-gray-300 rounded px-3 py-2">
+      </div>
+      <div class="mb-5">
+        <label class="block text-sm mb-1">密码</label>
+        <input id="login-pwd" type="password" class="w-full border border-gray-300 rounded px-3 py-2">
+      </div>
+      <button id="do-login" class="github-btn w-full py-2 font-medium">登录</button>
+    </div>
 
-        .navbar {
-            background-color: white;
-            padding: 1.2rem 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-        }
+    <div id="register-panel" class="hidden">
+      <div class="mb-3">
+        <label class="block text-sm mb-1">用户名</label>
+        <input id="reg-user" class="w-full border border-gray-300 rounded px-3 py-2">
+      </div>
+      <div class="mb-3">
+        <label class="block text-sm mb-1">密码</label>
+        <input id="reg-pwd" type="password" class="w-full border border-gray-300 rounded px-3 py-2">
+      </div>
+      <button id="do-register" class="github-btn w-full py-2 font-medium">注册</button>
+    </div>
+  </div>
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-            letter-spacing: -0.02em;
-        }
+  <div id="main-view" class="hidden">
+    <div class="github-box p-4 mb-4 flex justify-between items-center">
+      <div>欢迎，<span id="show-user"></span></div>
+      <button id="logout" class="text-sm border border-gray-300 px-3 py-1 rounded">退出</button>
+    </div>
 
-        .back-btn {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-        }
+    <div class="github-box p-6 mb-4">
+      <div class="mb-4">
+        <label class="block text-sm mb-1">文件 ID（5 位字符）</label>
+        <input id="file-id" placeholder="xxxxx" maxlength="5" class="w-full border border-gray-300 rounded px-3 py-2">
+      </div>
 
-        .back-btn:hover {
-            color: var(--accent);
-        }
+      <div class="mb-4">
+        <label class="block text-sm mb-1">内容/图片（支持 MD）</label>
+        <input id="upload-img" type="file" accept="image/*" class="text-sm mb-2 block">
+        <textarea id="content" rows="8" placeholder="# 标题
+**加粗**
+- 列表
+![图片](url)" class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+      </div>
 
-        .upload-section {
-            padding: 5rem 5%;
-            max-width: 800px;
-            margin: 0 auto;
-        }
+      <button id="upload" class="github-btn px-4 py-2 font-medium">上传到 GitHub</button>
+    </div>
 
-        .section-title {
-            font-size: 2rem;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 3rem;
-            position: relative;
-        }
+    <div id="msg" class="text-sm text-center"></div>
+  </div>
+</div>
 
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 3px;
-            background-color: var(--primary);
-            margin: 1rem auto 0;
-            border-radius: 3px;
-        }
+<script>
+const CONFIG = {
+  token: '',
+  owner: 'HYQY2012',
+  userRepo: 'users',
+  dataRepo: 'data',
+  branch: 'main'
+}
 
-        .upload-form {
-            background-color: white;
-            padding: 3rem;
-            border-radius: 16px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-        }
+const tabLogin = document.getElementById('tab-login')
+const tabRegister = document.getElementById('tab-register')
+const loginPanel = document.getElementById('login-panel')
+const registerPanel = document.getElementById('register-panel')
 
-        .form-group {
-            margin-bottom: 2rem;
-        }
+tabLogin.onclick = () => {
+  tabLogin.classList.add('active')
+  tabRegister.classList.remove('active')
+  loginPanel.classList.remove('hidden')
+  registerPanel.classList.add('hidden')
+}
+tabRegister.onclick = () => {
+  tabRegister.classList.add('active')
+  tabLogin.classList.remove('active')
+  registerPanel.classList.remove('hidden')
+  loginPanel.classList.add('hidden')
+}
 
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.8rem;
-            color: var(--primary);
-        }
+function sha256(str) {
+  return btoa(unescape(encodeURIComponent(str)))
+}
 
-        .form-input {
-            width: 100%;
-            padding: 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            font-size: 1rem;
-            color: var(--secondary);
-            transition: var(--transition);
-        }
+function toast(text) {
+  document.getElementById('msg').textContent = text
+  setTimeout(() => { document.getElementById('msg').textContent = '' }, 3000)
+}
 
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
-        }
+document.getElementById('do-register').onclick = async () => {
+  const user = document.getElementById('reg-user').value.trim()
+  const pwd = document.getElementById('reg-pwd').value.trim()
+  if (!user || !pwd) return toast('请输入用户名和密码')
 
-        .form-textarea {
-            min-height: 200px;
-            resize: vertical;
-            line-height: 1.7;
-        }
+  const fileName = `users_${user}.json`
+  const content = JSON.stringify({
+    username: user,
+    password: sha256(pwd),
+    createdAt: new Date().toISOString()
+  }, null, 2)
 
-        .submit-btn {
-            width: 100%;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 1rem;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
+  try {
+    await uploadToRepo(CONFIG.userRepo, fileName, content)
+    toast('注册成功！请登录')
+    tabLogin.click()
+  } catch (e) {
+    toast('注册失败：' + e.message)
+  }
+}
 
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            opacity: 0.95;
-        }
+document.getElementById('do-login').onclick = async () => {
+  const user = document.getElementById('login-user').value.trim()
+  const pwd = document.getElementById('login-pwd').value.trim()
+  if (!user || !pwd) return toast('请输入用户名和密码')
 
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
+  try {
+    const data = await getFile(CONFIG.userRepo, `users_${user}.json`)
+    const local = JSON.parse(atob(data.content))
+    if (local.password !== sha256(pwd)) throw new Error('密码错误')
 
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            opacity: 0;
-            transition: var(--transition);
-        }
+    localStorage.setItem('hyqy-user', user)
+    showMain()
+  } catch (e) {
+    toast('登录失败：' + e.message)
+  }
+}
 
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
+document.getElementById('upload').onclick = async () => {
+  const id = document.getElementById('file-id').value.trim()
+  const text = document.getElementById('content').value.trim()
+  if (id.length !== 5) return toast('请输入 5 位文件 ID')
+  if (!text) return toast('请输入内容')
 
-        .toast.error {
-            background-color: var(--error);
-        }
-
-        .toast.success {
-            background-color: var(--success);
-        }
-    </style>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>HYQY ${id}</title>
+<style>body{max-width:800px;margin:0 auto;padding:2rem;font-family:system-ui;}</style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="../" class="back-btn"><i class="fas fa-arrow-left"></i> 返回首页</a>
-        <a href="../" class="logo">HYQY Chat</a>
-    </nav>
+${mdToHtml(text)}
+</body>
+</html>`
 
-    <section class="upload-section">
-        <h2 class="section-title">发布新内容</h2>
-        <form class="upload-form" id="upload-form">
-            <div class="form-group">
-                <label class="form-label" for="username">用户名</label>
-                <input type="text" class="form-input" id="username" placeholder="输入你的昵称" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="content">内容</label>
-                <textarea class="form-input form-textarea" id="content" placeholder="输入你要发布的内容..." required></textarea>
-            </div>
-            <button type="submit" class="submit-btn" id="submit-btn">发布内容</button>
-        </form>
-    </section>
+  try {
+    await uploadToRepo(CONFIG.dataRepo, `id_${id}.html`, html)
+    toast('上传成功：https://github.com/HYQY2012/data/blob/main/id_' + id + '.html')
+  } catch (e) {
+    toast('上传失败：' + e.message)
+  }
+}
 
-    <div class="toast" id="toast"></div>
+document.getElementById('upload-img').onchange = function (e) {
+  const file = e.target.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const curr = document.getElementById('content').value
+    document.getElementById('content').value = curr + '\n![image](' + reader.result + ')'
+    toast('已插入图片')
+  }
+  reader.readAsDataURL(file)
+}
 
-    <script>
-        const CONFIG = {
-            token: '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',
-            githubApi: 'https://api.github.com/repos/HYQY2012/hyqy2012.github.io/contents/articles',
-            baseUrl: 'https://www.xn--vqq068m4ham0n.space/articles'
-        };
+async function getFile(repo, path) {
+  const r = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${repo}/contents/${path}`, {
+    headers: { Authorization: `token ${CONFIG.token}` }
+  })
+  if (!r.ok) throw new Error((await r.json()).message)
+  return await r.json()
+}
 
-        document.getElementById('upload-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submit-btn');
-            const username = document.getElementById('username').value.trim();
-            const content = document.getElementById('content').value.trim();
+async function uploadToRepo(repo, path, content) {
+  let sha = ''
+  try {
+    const cur = await getFile(repo, path)
+    sha = cur.sha
+  } catch {}
 
-            if (!username || !content) {
-                showToast('用户名和内容不能为空', 'error');
-                return;
-            }
+  const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `token ${CONFIG.token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: `HYQY Chat save ${path}`,
+      content: btoa(unescape(encodeURIComponent(content))),
+      sha: sha || undefined
+    })
+  })
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = '发布中...';
+  if (!res.ok) throw new Error((await res.json()).message)
+  return await res.json()
+}
 
-            try {
-                const fileNum = await getNextFileNumber();
-                const fileName = `data_${fileNum.toString().padStart(4, '0')}.json`;
-                const fileContent = JSON.stringify({
-                    user: username,
-                    content: content,
-                    publishTime: new Date().toISOString(),
-                    likes: 0,
-                    userLiked: [],
-                    comments: []
-                }, null, 2);
+function mdToHtml(md) {
+  return md
+    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^- (.*)$/gm, '<li>$1</li>')
+    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" style="max-width:100%">')
+    .replace(/\n/g, '<br>')
+}
 
-                const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
-                const response = await fetch(CONFIG.githubApi + '/' + fileName, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: `发布新内容: ${fileName}`,
-                        content: base64Content,
-                        branch: 'main'
-                    })
-                });
+function showMain() {
+  document.getElementById('auth-view').classList.add('hidden')
+  document.getElementById('main-view').classList.remove('hidden')
+  document.getElementById('show-user').textContent = localStorage.getItem('hyqy-user')
+}
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || `发布失败: ${response.status}`);
-                }
+document.getElementById('logout').onclick = () => {
+  localStorage.clear()
+  location.reload()
+}
 
-                showToast('发布成功！即将返回首页', 'success');
-                setTimeout(() => {
-                    window.location.href = '../';
-                }, 2000);
-
-            } catch (error) {
-                console.error('发布失败:', error);
-                showToast('发布失败: ' + error.message, 'error');
-                submitBtn.disabled = false;
-                submitBtn.textContent = '发布内容';
-            }
-        });
-
-        async function getNextFileNumber() {
-            try {
-                const response = await fetch(CONFIG.githubApi, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `token ${CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    },
-                    timeout: 5000
-                });
-
-                if (!response.ok) {
-                    throw new Error('获取文件列表失败');
-                }
-
-                const files = await response.json();
-                const numList = files.map(file => {
-                    const match = file.name.match(/^data_(\d+)\.json$/);
-                    return match ? parseInt(match[1]) : 0;
-                }).filter(num => num > 0);
-
-                return numList.length > 0 ? Math.max(...numList) + 1 : 1;
-            } catch (e) {
-                console.error('获取文件序号失败:', e);
-                const randomNum = Math.floor(Math.random() * 9999) + 1;
-                return randomNum;
-            }
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast show ${type}`;
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-    </script>
+window.onload = () => {
+  if (localStorage.getItem('hyqy-user')) showMain()
+}
+</script>
 </body>
 </html>
