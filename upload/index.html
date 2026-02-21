@@ -1,3 +1,4 @@
+<!-- 修了 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -98,7 +99,7 @@ input:focus, textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 1px rgba(
 
 <script>
 const CONFIG = {
-  token: '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', 
+  token: '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',
   owner: 'HYQY2012',
   userRepo: 'users',
   dataRepo: 'data',
@@ -156,6 +157,7 @@ document.getElementById('do-register').onclick = async () => {
     tabLogin.click()
   } catch (e) {
     toast('注册失败：' + e.message)
+    console.log('注册错误详情：', e) 
   }
 }
 
@@ -173,6 +175,7 @@ document.getElementById('do-login').onclick = async () => {
     showMain()
   } catch (e) {
     toast('登录失败：' + e.message)
+    console.log('登录错误详情：', e) 
   }
 }
 
@@ -199,6 +202,7 @@ ${mdToHtml(text)}
     toast('上传成功：https://github.com/HYQY2012/data/blob/main/id_' + id + '.html')
   } catch (e) {
     toast('上传失败：' + e.message)
+    console.log('上传错误详情：', e) 
   }
 }
 
@@ -247,7 +251,7 @@ async function uploadToRepo(repo, path, content) {
     })
   })
 
-  if (!res.ok) throw new Error((await res.json()).message)
+  if (!res.ok) throw new Error((await r.json()).message) 、
   return await res.json()
 }
 
